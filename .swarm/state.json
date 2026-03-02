@@ -1,14 +1,14 @@
 {
-  "mission": "Build a fully functional end-to-end web app with HeroUI v3, Next.js 15, and Claude Code CLI integration. Users input a URL, Claude Code runs SEO analysis, results shown in dashboard per project. PostgreSQL (Docker) for storage. Charts, floating sidebar, professional grid layout.",
-  "status": "specs-ready",
+  "mission": "Build a fully functional end-to-end web app with HeroUI v3, Next.js 15, and Claude Code CLI integration.",
+  "status": "launching",
   "created": "2026-03-02",
   "branch": "main",
   "workers": [
-    { "slug": "scaffold-foundation", "status": "ready", "branch": "worker/scaffold-foundation", "worktree": null },
-    { "slug": "ui-components", "status": "ready", "branch": "worker/ui-components", "worktree": null },
-    { "slug": "layout-navigation", "status": "ready", "branch": "worker/layout-navigation", "worktree": null },
-    { "slug": "database-api", "status": "ready", "branch": "worker/database-api", "worktree": null },
-    { "slug": "dashboard-pages", "status": "ready", "branch": "worker/dashboard-pages", "worktree": null },
-    { "slug": "audit-engine", "status": "ready", "branch": "worker/audit-engine", "worktree": null }
+    { "slug": "scaffold-foundation", "status": "launching", "branch": "worker/scaffold-foundation", "worktree": "../claude-seo-worker-scaffold-foundation" },
+    { "slug": "ui-components", "status": "launching", "branch": "worker/ui-components", "worktree": "../claude-seo-worker-ui-components" },
+    { "slug": "layout-navigation", "status": "launching", "branch": "worker/layout-navigation", "worktree": "../claude-seo-worker-layout-navigation" },
+    { "slug": "database-api", "status": "launching", "branch": "worker/database-api", "worktree": "../claude-seo-worker-database-api" },
+    { "slug": "dashboard-pages", "status": "launching", "branch": "worker/dashboard-pages", "worktree": "../claude-seo-worker-dashboard-pages" },
+    { "slug": "audit-engine", "status": "launching", "branch": "worker/audit-engine", "worktree": "../claude-seo-worker-audit-engine" }
   ]
 }
