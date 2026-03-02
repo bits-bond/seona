@@ -1,4 +1,4 @@
-export type { AuditProgress, ParsedReport, ParsedActionPlan } from './types';
+export type { AuditProgress, ParsedReport, ParsedActionPlan, CategoryType } from './types';
 export { parseFullReport, parseActionPlan } from './parser';
 export { connectAuditStream } from './stream';
 export {
