@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@heroui/react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
