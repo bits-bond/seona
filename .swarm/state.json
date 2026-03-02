@@ -1,0 +1,14 @@
+{
+  "mission": "Build a fully functional end-to-end web app with HeroUI v3, Next.js 15, and Claude Code CLI integration. Users input a URL, Claude Code runs SEO analysis, results shown in dashboard per project. PostgreSQL (Docker) for storage. Charts, floating sidebar, professional grid layout.",
+  "status": "specs-ready",
+  "created": "2026-03-02",
+  "branch": "main",
+  "workers": [
+    { "slug": "scaffold-foundation", "status": "ready", "branch": "worker/scaffold-foundation", "worktree": null },
+    { "slug": "ui-components", "status": "ready", "branch": "worker/ui-components", "worktree": null },
+    { "slug": "layout-navigation", "status": "ready", "branch": "worker/layout-navigation", "worktree": null },
+    { "slug": "database-api", "status": "ready", "branch": "worker/database-api", "worktree": null },
+    { "slug": "dashboard-pages", "status": "ready", "branch": "worker/dashboard-pages", "worktree": null },
+    { "slug": "audit-engine", "status": "ready", "branch": "worker/audit-engine", "worktree": null }
+  ]
+}
