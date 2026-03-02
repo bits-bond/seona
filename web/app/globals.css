@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+:root {
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --chart-critical: oklch(0.577 0.245 27.325);
+  --chart-high: oklch(0.554 0.135 66.442);
+  --chart-medium: oklch(0.681 0.162 75.834);
+  --chart-low: oklch(0.627 0.194 149.214);
+  --chart-good: oklch(0.627 0.194 149.214);
+  --chart-needs-work: oklch(0.554 0.135 66.442);
+  --chart-poor: oklch(0.577 0.245 27.325);
+}
+
+[data-theme="dark"] {
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --chart-critical: oklch(0.577 0.245 27.325);
+  --chart-high: oklch(0.554 0.135 66.442);
+  --chart-medium: oklch(0.681 0.162 75.834);
+  --chart-low: oklch(0.627 0.194 149.214);
+  --chart-good: oklch(0.627 0.194 149.214);
+  --chart-needs-work: oklch(0.554 0.135 66.442);
+  --chart-poor: oklch(0.577 0.245 27.325);
+}

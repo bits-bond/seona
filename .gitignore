@@ -34,6 +34,13 @@ env/
 # Node (if any)
 node_modules/
 
+# Web app
+web/node_modules/
+web/.next/
+web/.env
+web/.env.local
+web/drizzle/
+
 # Logs
 *.log
 
@@ -47,3 +54,4 @@ screenshots/
 # Temporary analysis files
 *-AUDIT-REPORT.md
 *-ACTION-PLAN.md
+.claude/
