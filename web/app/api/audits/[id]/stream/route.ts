@@ -42,7 +42,6 @@ export async function GET(
       }
 
       // Poll for status changes every 2 seconds
-      let lastStatus = audit.status;
       let pollCount = 0;
       const maxPolls = 300; // 10 minutes max (300 * 2s)
 
@@ -93,7 +92,6 @@ export async function GET(
             return;
           }
 
-          lastStatus = current.status;
           pollCount++;
 
           // Check if client disconnected

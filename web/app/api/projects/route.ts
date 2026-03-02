@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { projects, audits } from '@/lib/db/schema';
-import { desc, eq, sql, count, max } from 'drizzle-orm';
+import { desc, sql } from 'drizzle-orm';
 
 // GET /api/projects — list all projects with computed audit fields
 export async function GET() {
