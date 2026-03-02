@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "./sidebar";
 import { TopNavbar } from "./top-navbar";
-import { PageHeader, type PageHeaderProps } from "./page-header";
+import { PageHeader } from "./page-header";
 import type { BreadcrumbItem } from "./breadcrumbs";
 
 const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
 const SIDEBAR_WIDTH_EXPANDED = 260;
 const SIDEBAR_WIDTH_COLLAPSED = 64;
-const SIDEBAR_MARGIN = 12; // matches the sidebar's top/left/bottom margin
+const SIDEBAR_MARGIN = 12;
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -37,7 +37,7 @@ export function AppShell({
     const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
     if (stored === "true") setCollapsed(true);
 
-    // Listen for sidebar collapse changes
+    // Listen for sidebar collapse changes from other tabs
     const handleStorage = (e: StorageEvent) => {
       if (e.key === SIDEBAR_STORAGE_KEY) {
         setCollapsed(e.newValue === "true");
@@ -45,7 +45,7 @@ export function AppShell({
     };
     window.addEventListener("storage", handleStorage);
 
-    // Also poll for same-tab localStorage changes (StorageEvent only fires cross-tab)
+    // Poll for same-tab localStorage changes (StorageEvent only fires cross-tab)
     const interval = setInterval(() => {
       const current = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
       setCollapsed((prev) => (prev !== current ? current : prev));
@@ -65,12 +65,13 @@ export function AppShell({
     <div className="min-h-screen bg-default-50">
       <Sidebar />
 
+      {/* Content area: on mobile (< md) no left margin; on desktop, offset by sidebar */}
       <div
         className={cn(
           "transition-[margin-left] duration-200 ease-in-out",
-          "md:ml-[272px]" // default fallback before JS hydration
+          "max-md:!ml-0"
         )}
-        style={mounted ? { marginLeft: `${sidebarOffset}px` } : undefined}
+        style={{ marginLeft: `${sidebarOffset}px` }}
       >
         <TopNavbar
           breadcrumbs={breadcrumbs}
