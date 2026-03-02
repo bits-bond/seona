@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@heroui/react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -10,6 +11,7 @@ export interface EmptyStateProps {
   title: string;
   description?: string;
   actionLabel?: string;
+  actionHref?: string;
   onAction?: () => void;
   className?: string;
 }
@@ -19,6 +21,7 @@ export function EmptyState({
   title,
   description,
   actionLabel,
+  actionHref,
   onAction,
   className,
 }: EmptyStateProps) {
@@ -40,8 +43,15 @@ export function EmptyState({
           {description}
         </p>
       )}
-      {actionLabel && onAction && (
-        <Button color="primary" className="mt-6" onPress={onAction}>
+      {actionLabel && actionHref && (
+        <Link href={actionHref}>
+          <Button variant="primary" className="mt-6">
+            {actionLabel}
+          </Button>
+        </Link>
+      )}
+      {actionLabel && onAction && !actionHref && (
+        <Button variant="primary" className="mt-6" onPress={onAction}>
           {actionLabel}
         </Button>
       )}

@@ -13,7 +13,7 @@ export function ScoreBadge({ score, className }: ScoreBadgeProps) {
   const color = getScoreColor(score);
 
   return (
-    <Chip color={color} variant="flat" size="sm" className={cn(className)}>
+    <Chip color={color} variant="soft" size="sm" className={cn(className)}>
       {formatScore(score)}
     </Chip>
   );

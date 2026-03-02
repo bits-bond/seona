@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Button, Progress } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { connectAuditStream } from '@/lib/audit-engine/stream';
 import type { AuditProgress } from '@/lib/audit-engine/types';
 
@@ -62,6 +62,12 @@ export function AuditProgressDisplay({ auditId, onComplete }: AuditProgressProps
   const percentage = progress?.percentage ?? 0;
   const stage = progress?.stage ?? 'Initializing';
 
+  const barColor = error
+    ? 'bg-danger'
+    : isComplete
+      ? 'bg-success'
+      : 'bg-primary';
+
   return (
     <div className="flex flex-col gap-4 w-full max-w-2xl">
       <div className="flex flex-col gap-2">
@@ -69,12 +75,12 @@ export function AuditProgressDisplay({ auditId, onComplete }: AuditProgressProps
           <span className="text-sm font-medium">{stage}</span>
           <span className="text-sm text-default-500">{percentage}%</span>
         </div>
-        <Progress
-          value={percentage}
-          color={error ? 'danger' : isComplete ? 'success' : 'primary'}
-          size="md"
-          aria-label="Audit progress"
-        />
+        <div className="w-full h-2 rounded-full bg-default-200 overflow-hidden" role="progressbar" aria-valuenow={percentage} aria-valuemin={0} aria-valuemax={100} aria-label="Audit progress">
+          <div
+            className={`h-full rounded-full transition-all duration-300 ${barColor}`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
       </div>
 
       <div
@@ -100,7 +106,7 @@ export function AuditProgressDisplay({ auditId, onComplete }: AuditProgressProps
 
       {isComplete && (
         <Button
-          color="success"
+          variant="primary"
           size="lg"
           onPress={onComplete}
         >

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 export interface LoadingSkeletonProps {
   variant: "card" | "table" | "chart" | "page";
   className?: string;
+  count?: number;
 }
 
 function Bone({ className }: { className?: string }) {
@@ -66,7 +67,16 @@ const variants = {
   page: PageSkeleton,
 };
 
-export function LoadingSkeleton({ variant, className }: LoadingSkeletonProps) {
+export function LoadingSkeleton({ variant, className, count = 1 }: LoadingSkeletonProps) {
   const Component = variants[variant];
+  if (count > 1) {
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: count }).map((_, i) => (
+          <Component key={i} className={className} />
+        ))}
+      </div>
+    );
+  }
   return <Component className={className} />;
 }

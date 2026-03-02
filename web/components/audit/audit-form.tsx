@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Button, Input, Select, SelectItem, Switch } from '@heroui/react';
+import { Button } from '@heroui/react';
 
 interface Project {
   id: string;
@@ -18,6 +18,9 @@ interface AuditFormProps {
 
 const URL_REGEX = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
 
+const inputClass =
+  "h-10 w-full rounded-lg border-2 border-default-200 bg-transparent px-3 text-sm text-foreground outline-none transition-colors hover:border-default-400 focus:border-primary";
+
 export function AuditForm({ projectId, projects, onSubmit, isSubmitting }: AuditFormProps) {
   const [selectedProjectId, setSelectedProjectId] = useState(projectId ?? '');
   const [isNewProject, setIsNewProject] = useState(projects.length === 0);
@@ -25,7 +28,6 @@ export function AuditForm({ projectId, projects, onSubmit, isSubmitting }: Audit
   const [projectName, setProjectName] = useState('');
   const [urlError, setUrlError] = useState('');
 
-  // Auto-fill URL when project is selected
   const handleProjectChange = (value: string) => {
     setSelectedProjectId(value);
     const project = projects.find((p) => p.id === value);
@@ -64,71 +66,84 @@ export function AuditForm({ projectId, projects, onSubmit, isSubmitting }: Audit
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-lg">
-      <div className="flex items-center gap-2">
-        <Switch
-          isSelected={isNewProject}
-          onValueChange={(val) => {
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={isNewProject}
+          onChange={(e) => {
+            const val = e.target.checked;
             setIsNewProject(val);
             if (val) {
               setSelectedProjectId('');
               setUrl('');
             }
           }}
-          size="sm"
-        >
-          Create new project
-        </Switch>
-      </div>
+          className="h-4 w-4 rounded border-default-300 accent-primary"
+        />
+        <span className="text-sm font-medium">Create new project</span>
+      </label>
 
       {isNewProject ? (
-        <Input
-          label="Project Name"
-          placeholder="My Website"
-          value={projectName}
-          onValueChange={setProjectName}
-          isRequired
-          variant="bordered"
-        />
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="project-name" className="text-sm font-medium text-foreground">
+            Project Name <span className="text-danger">*</span>
+          </label>
+          <input
+            id="project-name"
+            placeholder="My Website"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            required
+            className={inputClass}
+          />
+        </div>
       ) : (
-        <Select
-          label="Select Project"
-          placeholder="Choose a project"
-          selectedKeys={selectedProjectId ? [selectedProjectId] : []}
-          onSelectionChange={(keys) => {
-            const key = Array.from(keys)[0] as string;
-            if (key) handleProjectChange(key);
-          }}
-          isRequired
-          variant="bordered"
-        >
-          {projects.map((project) => (
-            <SelectItem key={project.id}>
-              {project.name}
-            </SelectItem>
-          ))}
-        </Select>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="project-select" className="text-sm font-medium text-foreground">
+            Select Project <span className="text-danger">*</span>
+          </label>
+          <select
+            id="project-select"
+            value={selectedProjectId}
+            onChange={(e) => handleProjectChange(e.target.value)}
+            required
+            className={inputClass}
+          >
+            <option value="" disabled>Choose a project</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
 
-      <Input
-        label="Website URL"
-        placeholder="https://example.com"
-        value={url}
-        onValueChange={(val) => {
-          setUrl(val);
-          if (urlError) validateUrl(val);
-        }}
-        isRequired
-        isInvalid={!!urlError}
-        errorMessage={urlError}
-        variant="bordered"
-        type="url"
-      />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="url-input" className="text-sm font-medium text-foreground">
+          Website URL <span className="text-danger">*</span>
+        </label>
+        <input
+          id="url-input"
+          placeholder="https://example.com"
+          value={url}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            if (urlError) validateUrl(e.target.value);
+          }}
+          required
+          type="url"
+          className={`${inputClass} ${urlError ? 'border-danger' : ''}`}
+        />
+        {urlError && (
+          <p className="text-xs text-danger">{urlError}</p>
+        )}
+      </div>
 
       <Button
         type="submit"
-        color="primary"
+        variant="primary"
         size="lg"
-        isLoading={isSubmitting}
         isDisabled={isSubmitting || (!isNewProject && !selectedProjectId) || !url}
       >
         {isSubmitting ? 'Starting Audit...' : 'Start Audit'}

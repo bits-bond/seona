@@ -26,7 +26,7 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <Card className={cn("p-6", className)}>
-      <Card.Body className="flex flex-row items-start justify-between gap-4 p-0">
+      <Card.Content className="flex flex-row items-start justify-between gap-4 p-0">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="text-2xl font-bold">{value}</p>
@@ -53,7 +53,7 @@ export function StatCard({
             {icon}
           </div>
         )}
-      </Card.Body>
+      </Card.Content>
     </Card>
   );
 }

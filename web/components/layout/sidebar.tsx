@@ -146,7 +146,7 @@ export function Sidebar({ className }: SidebarProps) {
       )}>
         <Button
           isIconOnly
-          variant="light"
+          variant="ghost"
           size="sm"
           onPress={toggleCollapse}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -201,7 +201,7 @@ export function Sidebar({ className }: SidebarProps) {
         <div className="flex items-center justify-end p-2">
           <Button
             isIconOnly
-            variant="light"
+            variant="ghost"
             size="sm"
             onPress={closeMobile}
             aria-label="Close sidebar"

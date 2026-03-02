@@ -121,18 +121,17 @@ export default function AuditDetailPage() {
               <h3 className="text-lg font-semibold mb-4">Category Comparison</h3>
               <ChartBar
                 data={categoryChartData}
-                dataKey="score"
-                xAxisKey="name"
+                xKey="name"
+                yKeys={["score"]}
                 height={300}
-                color="var(--chart-1)"
               />
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">Category Radar</h3>
               <ChartRadar
                 data={radarData}
-                dataKey="score"
-                nameKey="category"
+                angleKey="category"
+                valueKeys={["score"]}
                 height={300}
               />
             </div>

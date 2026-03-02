@@ -18,7 +18,7 @@ export function SeverityBadge({ severity, className }: SeverityBadgeProps) {
   return (
     <Chip
       color={config.color}
-      variant="flat"
+      variant="soft"
       size="sm"
       className={cn(className)}
     >

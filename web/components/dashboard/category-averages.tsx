@@ -30,8 +30,8 @@ export function CategoryAverages({ categories }: CategoryAveragesProps) {
       <h3 className="text-lg font-semibold mb-4">Category Averages</h3>
       <ChartRadar
         data={data}
-        dataKey="score"
-        nameKey="category"
+        angleKey="category"
+        valueKeys={["score"]}
         height={300}
       />
     </div>

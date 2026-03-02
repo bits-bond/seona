@@ -32,7 +32,7 @@ export function TopNavbar({ breadcrumbs, className, sidebarWidth = 260 }: TopNav
         {/* Mobile hamburger */}
         <Button
           isIconOnly
-          variant="light"
+          variant="ghost"
           size="sm"
           className="md:hidden"
           onPress={openMobileSidebar}

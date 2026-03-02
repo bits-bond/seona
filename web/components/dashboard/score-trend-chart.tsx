@@ -30,11 +30,9 @@ export function ScoreTrendChart({ audits }: ScoreTrendChartProps) {
       <h3 className="text-lg font-semibold mb-4">Score Trend</h3>
       <ChartArea
         data={data}
-        dataKey="score"
-        xAxisKey="date"
+        xKey="date"
+        yKeys={["score"]}
         height={300}
-        color="var(--chart-2)"
-        yDomain={[0, 100]}
       />
     </div>
   );

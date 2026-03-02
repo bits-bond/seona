@@ -31,10 +31,9 @@ export function ScoreDistribution({ projects }: ScoreDistributionProps) {
       <h3 className="text-lg font-semibold mb-4">Score Distribution</h3>
       <ChartBar
         data={data}
-        dataKey="count"
-        xAxisKey="name"
+        xKey="name"
+        yKeys={["count"]}
         height={300}
-        color="var(--chart-1)"
       />
     </div>
   );

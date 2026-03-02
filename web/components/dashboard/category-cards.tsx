@@ -9,7 +9,7 @@ import {
   Code,
   Database,
   Zap,
-  Image,
+  ImageIcon,
   Bot,
 } from 'lucide-react';
 import type { AuditCategory, CategoryType } from '@/types';
@@ -25,7 +25,7 @@ const iconMap: Record<string, React.ReactNode> = {
   Code: <Code className="h-5 w-5" />,
   Database: <Database className="h-5 w-5" />,
   Zap: <Zap className="h-5 w-5" />,
-  Image: <Image className="h-5 w-5" />,
+  Image: <ImageIcon className="h-5 w-5" />,
   Bot: <Bot className="h-5 w-5" />,
 };
 
