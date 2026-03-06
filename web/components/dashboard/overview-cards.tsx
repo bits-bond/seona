@@ -13,11 +13,12 @@ interface OverviewCardsProps {
 export function OverviewCards({ projects, audits }: OverviewCardsProps) {
   const totalProjects = projects.length;
 
+  const scoredProjects = projects.filter((p) => p.lastAuditScore != null);
   const avgScore =
-    projects.length > 0
+    scoredProjects.length > 0
       ? Math.round(
-          projects.reduce((sum, p) => sum + (p.lastAuditScore ?? 0), 0) /
-            projects.filter((p) => p.lastAuditScore !== null).length || 0
+          scoredProjects.reduce((sum, p) => sum + (p.lastAuditScore ?? 0), 0) /
+            scoredProjects.length
         )
       : 0;
 

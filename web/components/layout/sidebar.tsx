@@ -26,7 +26,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Projects", href: "/projects", icon: FolderOpen },
-  { label: "New Audit", href: "/audits/new", icon: PlusCircle },
+  { label: "New Audit", href: "/new-audit", icon: PlusCircle },
 ];
 
 export interface SidebarProps {
@@ -87,18 +87,15 @@ export function Sidebar({ className }: SidebarProps) {
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className={cn(
-        "flex items-center gap-2 px-4 h-14 shrink-0",
-        collapsed && "justify-center px-0"
-      )}>
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-          <span className="text-white font-bold text-sm">CS</span>
-        </div>
-        {!collapsed && (
-          <span className="font-semibold text-default-900 text-sm whitespace-nowrap">
-            Claude SEO
-          </span>
+      <div
+        className={cn(
+          "flex items-center gap-2 px-4 h-14 shrink-0",
+          collapsed && "justify-center px-0",
         )}
+      >
+        <span className="font-semibold text-default-900 text-md whitespace-nowrap">
+          SEONA
+        </span>
       </div>
 
       {/* Navigation Links */}
@@ -115,7 +112,7 @@ export function Sidebar({ className }: SidebarProps) {
                 active
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-default-600 hover:bg-default-100 hover:text-default-900",
-                collapsed && "justify-center px-0"
+                collapsed && "justify-center px-0",
               )}
               title={collapsed ? item.label : undefined}
             >
@@ -140,10 +137,12 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       {/* Collapse Toggle */}
-      <div className={cn(
-        "shrink-0 p-2 border-t border-default-200",
-        collapsed ? "flex justify-center" : "flex justify-end"
-      )}>
+      <div
+        className={cn(
+          "shrink-0 p-2 border-t border-default-200",
+          collapsed ? "flex justify-center" : "flex justify-end",
+        )}
+      >
         <Button
           isIconOnly
           variant="ghost"
@@ -174,7 +173,7 @@ export function Sidebar({ className }: SidebarProps) {
           "bg-background/80 backdrop-blur-xl border border-default-200 rounded-2xl shadow-lg",
           "transition-[width] duration-200 ease-in-out overflow-hidden",
           collapsed ? "w-16" : "w-[260px]",
-          className
+          className,
         )}
       >
         {sidebarContent}
@@ -195,7 +194,7 @@ export function Sidebar({ className }: SidebarProps) {
           "fixed top-0 left-0 bottom-0 z-50 w-[280px] md:hidden",
           "bg-background border-r border-default-200 shadow-2xl",
           "transition-transform duration-200 ease-in-out",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex items-center justify-end p-2">
@@ -218,6 +217,7 @@ export function Sidebar({ className }: SidebarProps) {
 // Export a hook for other components to trigger mobile sidebar
 export function useSidebarMobileToggle() {
   // We use a custom event to communicate between navbar hamburger and sidebar
-  const open = () => window.dispatchEvent(new CustomEvent("sidebar-mobile-open"));
+  const open = () =>
+    window.dispatchEvent(new CustomEvent("sidebar-mobile-open"));
   return { open };
 }

@@ -13,7 +13,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 rounded-xl bg-content1 border border-divider">
       <div className="flex items-center gap-6">
-        {project.lastAuditScore !== null && (
+        {project.lastAuditScore != null && (
           <ScoreGauge score={project.lastAuditScore} size="md" showLabel />
         )}
         <div>

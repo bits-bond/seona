@@ -21,28 +21,75 @@ const SEVERITY_HEADERS: Record<string, 'critical' | 'high' | 'medium' | 'low'> =
  * Parse the FULL-AUDIT-REPORT.md into structured data.
  */
 export function parseFullReport(markdown: string): ParsedReport {
-  const overallScoreMatch = markdown.match(/## SEO Health Score:\s*(\d+)\/100/);
+  const overallScoreMatch = markdown.match(/(?:#{2,3}\s*(?:Overall\s+)?SEO Health Score:\s*|(?:Overall\s+)?SEO Health Score\*{0,2}\s*\|\s*\*{0,2})(\d+)\s*\/\s*100/);
   const overallScore = overallScoreMatch ? parseInt(overallScoreMatch[1], 10) : 0;
 
-  const businessTypeMatch = markdown.match(/\*\*Business Type:\*\*\s*(.+)/);
+  const businessTypeMatch = markdown.match(/\*\*Business Type(?:\s+Detected)?:\*\*\s*(.+)/);
   const businessType = businessTypeMatch ? businessTypeMatch[1].trim() : null;
 
-  const pagesCrawledMatch = markdown.match(/\*\*Pages Crawled:\*\*\s*(\d+)/);
+  const pagesCrawledMatch = markdown.match(/\*\*Pages (?:Crawled|Discovered):\*\*\s*(\d+)/);
   const pagesCrawled = pagesCrawledMatch ? parseInt(pagesCrawledMatch[1], 10) : null;
 
   const categories: ParsedReport['categories'] = [];
-  const categoryRegex = /\|\s*(.+?)\s*\|\s*(\d+)%\s*\|\s*(\d+)\/100\s*\|\s*([\d.]+)\s*\|/g;
-  let match;
 
-  while ((match = categoryRegex.exec(markdown)) !== null) {
-    const rawName = match[1].trim();
-    const category = CATEGORY_MAP[rawName];
-    if (category) {
+  // Parse category rows from markdown tables in any column order
+  // Match rows containing a category name, a percentage, a score/100, and a weighted value
+  const tableRowRegex = /^\|(.+)\|$/gm;
+  let rowMatch;
+
+  while ((rowMatch = tableRowRegex.exec(markdown)) !== null) {
+    const cells = rowMatch[1].split('|').map(c => c.trim());
+
+    // Find the category name cell
+    let catName: string | null = null;
+    let catType: CategoryType | undefined;
+    let weight: number | null = null;
+    let score: number | null = null;
+    let weightedScore: number | null = null;
+
+    for (const cell of cells) {
+      // Check if this cell is a category name
+      const cleanCell = cell.replace(/^\|?\s*/, '').trim();
+      if (CATEGORY_MAP[cleanCell]) {
+        catName = cleanCell;
+        catType = CATEGORY_MAP[cleanCell];
+        continue;
+      }
+      // Check for weight (N%)
+      const weightMatch = cell.match(/^(\d+)%$/);
+      if (weightMatch) {
+        weight = parseInt(weightMatch[1], 10);
+        continue;
+      }
+      // Check for score (N/100)
+      const scoreMatch = cell.match(/^(\d+)\s*\/\s*100$/);
+      if (scoreMatch) {
+        score = parseInt(scoreMatch[1], 10);
+        continue;
+      }
+      // Check for weighted score as fraction (N / M where M is weight like 25, 20, 10, 5)
+      const fractionMatch = cell.match(/^(\d+)\s*\/\s*(\d+)$/);
+      if (fractionMatch && catName && [25, 20, 10, 5].includes(parseInt(fractionMatch[2]))) {
+        const ws = parseInt(fractionMatch[1], 10);
+        const w = parseInt(fractionMatch[2], 10);
+        weight = w;
+        weightedScore = ws;
+        score = w > 0 ? Math.round((ws / w) * 100) : 0;
+        continue;
+      }
+      // Check for weighted score (decimal number like 7.00 or 10.5)
+      const weightedMatch = cell.match(/^(\d+\.?\d*)$/);
+      if (weightedMatch && catName) {
+        weightedScore = parseFloat(weightedMatch[1]);
+      }
+    }
+
+    if (catType && weight !== null && score !== null) {
       categories.push({
-        category,
-        weight: parseInt(match[2], 10),
-        score: parseInt(match[3], 10),
-        weightedScore: parseFloat(match[4]),
+        category: catType,
+        weight,
+        score,
+        weightedScore: weightedScore ?? (weight * score) / 100,
       });
     }
   }
@@ -87,11 +134,12 @@ export function parseActionPlan(markdown: string): ParsedActionPlan {
   };
 
   for (const line of lines) {
-    // Detect severity headers: ## CRITICAL, ## HIGH, ## MEDIUM, ## LOW
-    const severityMatch = line.match(/^## (CRITICAL|HIGH|MEDIUM|LOW)\b/);
+    // Detect severity headers: ## CRITICAL, ## Critical Priority, etc.
+    const severityMatch = line.match(/^## (CRITICAL|HIGH|MEDIUM|LOW)\b/i);
     if (severityMatch) {
       flushIssue();
-      currentSeverity = SEVERITY_HEADERS[severityMatch[1]];
+      const key = severityMatch[1].toUpperCase();
+      currentSeverity = SEVERITY_HEADERS[key];
       continue;
     }
 

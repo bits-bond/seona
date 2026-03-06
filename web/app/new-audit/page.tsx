@@ -76,6 +76,10 @@ function NewAuditForm() {
       }
 
       const audit = await res.json();
+
+      // Trigger the actual audit run
+      await fetch(`/api/audits/${audit.id}/run`, { method: 'POST' });
+
       router.push(`/projects/${projectId}/audits/${audit.id}`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'An error occurred');

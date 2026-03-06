@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Claude SEO Dashboard",
+  title: "SEONA Dashboard",
   description: "SEO audit dashboard powered by Claude Code CLI",
 };
 

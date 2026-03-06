@@ -5,11 +5,17 @@ import path from 'node:path';
 import { parseFullReport, parseActionPlan } from './parser';
 import type { AuditProgress } from './types';
 
+/** Persist maps across HMR reloads in Next.js dev mode via globalThis */
+const globalForRunner = globalThis as typeof globalThis & {
+  __auditActiveProcesses?: Map<string, ChildProcess>;
+  __auditProgressMap?: Map<string, AuditProgress>;
+};
+
 /** Map of active audit processes keyed by auditId */
-const activeProcesses = new Map<string, ChildProcess>();
+const activeProcesses = globalForRunner.__auditActiveProcesses ??= new Map<string, ChildProcess>();
 
 /** Map of progress data keyed by auditId for SSE polling */
-const auditProgressMap = new Map<string, AuditProgress>();
+const auditProgressMap = globalForRunner.__auditProgressMap ??= new Map<string, AuditProgress>();
 
 /** Project root is one level up from the web/ directory */
 const PROJECT_ROOT = path.resolve(process.cwd(), '..');
@@ -118,6 +124,11 @@ export async function startAudit(
     timestamp: new Date(),
   });
 
+  // Strip CLAUDECODE env var to allow spawning claude inside a dev server
+  // that may itself be running inside a Claude Code session
+  const cleanEnv = { ...process.env };
+  delete cleanEnv.CLAUDECODE;
+
   const child = spawn('claude', [
     '--print',
     '--dangerously-skip-permissions',
@@ -125,11 +136,12 @@ export async function startAudit(
     prompt,
   ], {
     cwd: PROJECT_ROOT,
-    env: { ...process.env },
+    env: cleanEnv,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
   activeProcesses.set(auditId, child);
+  console.error(`[audit-runner] Spawned claude CLI for ${auditId}, PID: ${child.pid}`);
   let currentPercentage = 5;
   let stdoutBuffer = '';
   let stderrBuffer = '';
@@ -164,6 +176,7 @@ export async function startAudit(
   });
 
   child.on('close', async (code) => {
+    console.error(`[audit-runner] Process closed for ${auditId} with code ${code}`);
     activeProcesses.delete(auditId);
 
     if (code !== 0) {
@@ -206,7 +219,7 @@ export async function startAudit(
         parsedActionPlan = parseActionPlan(actionPlanMd);
       }
 
-      // Store results via API
+      // Store audit fields via API
       const updateData: Record<string, unknown> = {
         status: 'completed',
         completedAt: new Date().toISOString(),
@@ -217,15 +230,30 @@ export async function startAudit(
         updateData.businessType = parsedReport.businessType;
         updateData.pagesCrawled = parsedReport.pagesCrawled;
         updateData.fullReportMd = parsedReport.fullReportMd;
-        updateData.categories = parsedReport.categories;
       }
 
       if (parsedActionPlan) {
         updateData.actionPlanMd = parsedActionPlan.actionPlanMd;
-        updateData.issues = parsedActionPlan.issues;
       }
 
       await updateAuditStatus(baseApiUrl, auditId, 'completed', updateData);
+
+      // Save categories and issues via separate API calls
+      if (parsedReport?.categories?.length) {
+        await fetch(`${baseApiUrl}/api/audits/${auditId}/categories`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ categories: parsedReport.categories }),
+        });
+      }
+
+      if (parsedActionPlan?.issues?.length) {
+        await fetch(`${baseApiUrl}/api/audits/${auditId}/issues`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ issues: parsedActionPlan.issues }),
+        });
+      }
 
       auditProgressMap.set(auditId, {
         percentage: 100,
@@ -249,6 +277,7 @@ export async function startAudit(
   });
 
   child.on('error', async (error) => {
+    console.error(`[audit-runner] Process error for ${auditId}:`, error.message);
     activeProcesses.delete(auditId);
 
     auditProgressMap.set(auditId, {

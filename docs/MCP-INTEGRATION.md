@@ -1,9 +1,10 @@
 <!-- Updated: 2026-02-07 -->
+
 # MCP Integration
 
 ## Overview
 
-Claude SEO can integrate with Model Context Protocol (MCP) servers to access external APIs and enhance analysis capabilities.
+SEONA can integrate with Model Context Protocol (MCP) servers to access external APIs and enhance analysis capabilities.
 
 ## Available Integrations
 
@@ -65,15 +66,15 @@ Use `mcp-server-pagespeed` by [enemyrr](https://github.com/enemyrr/mcp-server-pa
 
 The MCP ecosystem for SEO has matured significantly. These are production-ready integrations:
 
-| Tool | Package / Endpoint | Type | Notes |
-|------|-------------------|------|-------|
-| **Ahrefs** | `@ahrefs/mcp` | Official | Launched July 2025. Supports local and remote modes. Backlinks, keywords, site audit data. |
-| **Semrush** | `https://mcp.semrush.com/v1/mcp` | Official (remote) | Full API access via remote MCP endpoint. Domain analytics, keyword research, backlink data. |
-| **Google Search Console** | `mcp-server-gsc` | Community | By ahonn. Search performance, URL inspection, sitemaps. |
-| **PageSpeed Insights** | `mcp-server-pagespeed` | Community | By enemyrr. Lighthouse audits, CWV metrics, performance scoring. |
-| **DataForSEO** | `dataforseo-mcp-server` | Community | By Skobyn (GitHub: Skobyn/dataforseo-mcp-server). SERP data, keyword data, backlinks. |
-| **kwrds.ai** | kwrds MCP server | Community | Keyword research, search volume, difficulty scoring. |
-| **SEO Review Tools** | SEO Review Tools MCP | Community | Site auditing and on-page analysis API. |
+| Tool                      | Package / Endpoint               | Type              | Notes                                                                                       |
+| ------------------------- | -------------------------------- | ----------------- | ------------------------------------------------------------------------------------------- |
+| **Ahrefs**                | `@ahrefs/mcp`                    | Official          | Launched July 2025. Supports local and remote modes. Backlinks, keywords, site audit data.  |
+| **Semrush**               | `https://mcp.semrush.com/v1/mcp` | Official (remote) | Full API access via remote MCP endpoint. Domain analytics, keyword research, backlink data. |
+| **Google Search Console** | `mcp-server-gsc`                 | Community         | By ahonn. Search performance, URL inspection, sitemaps.                                     |
+| **PageSpeed Insights**    | `mcp-server-pagespeed`           | Community         | By enemyrr. Lighthouse audits, CWV metrics, performance scoring.                            |
+| **DataForSEO**            | `dataforseo-mcp-server`          | Community         | By Skobyn (GitHub: Skobyn/dataforseo-mcp-server). SERP data, keyword data, backlinks.       |
+| **kwrds.ai**              | kwrds MCP server                 | Community         | Keyword research, search volume, difficulty scoring.                                        |
+| **SEO Review Tools**      | SEO Review Tools MCP             | Community         | Site auditing and on-page analysis API.                                                     |
 
 ## API Usage Examples
 
@@ -115,23 +116,23 @@ def get_crux_data(url: str, api_key: str) -> dict:
 
 ### From PageSpeed Insights
 
-| Metric | Description |
-|--------|-------------|
-| LCP | Largest Contentful Paint (lab) |
-| INP | Interaction to Next Paint (estimated) |
-| CLS | Cumulative Layout Shift (lab) |
-| FCP | First Contentful Paint |
-| TBT | Total Blocking Time |
-| Speed Index | Visual progress speed |
+| Metric      | Description                           |
+| ----------- | ------------------------------------- |
+| LCP         | Largest Contentful Paint (lab)        |
+| INP         | Interaction to Next Paint (estimated) |
+| CLS         | Cumulative Layout Shift (lab)         |
+| FCP         | First Contentful Paint                |
+| TBT         | Total Blocking Time                   |
+| Speed Index | Visual progress speed                 |
 
 ### From CrUX (Field Data)
 
-| Metric | Description |
-|--------|-------------|
-| LCP | 75th percentile, real users |
-| INP | 75th percentile, real users |
-| CLS | 75th percentile, real users |
-| TTFB | Time to First Byte |
+| Metric | Description                 |
+| ------ | --------------------------- |
+| LCP    | 75th percentile, real users |
+| INP    | 75th percentile, real users |
+| CLS    | 75th percentile, real users |
+| TTFB   | Time to First Byte          |
 
 ## Best Practices
 
@@ -142,7 +143,7 @@ def get_crux_data(url: str, api_key: str) -> dict:
 
 ## Without API Keys
 
-If you don't have API keys, Claude SEO can still:
+If you don't have API keys, SEONA can still:
 
 1. Analyze HTML source for potential issues
 2. Identify common performance problems

@@ -1,11 +1,13 @@
 # Task: Layout System & Navigation
 
 ## Objective
+
 Create the app shell layout with a floating sidebar for project navigation, a top navbar with breadcrumbs and theme toggle, and a responsive grid layout system. These layout components wrap all pages and provide consistent navigation throughout the dashboard.
 
 ## Scope
 
 ### Create These Files
+
 - `web/components/layout/sidebar.tsx` — Floating sidebar with logo, project list, nav links, collapse toggle
 - `web/components/layout/top-navbar.tsx` — Top navigation bar with breadcrumbs, theme toggle (light/dark), and user area
 - `web/components/layout/app-shell.tsx` — Main layout wrapper that composes sidebar + navbar + content area with proper grid
@@ -16,10 +18,12 @@ Create the app shell layout with a floating sidebar for project navigation, a to
 - `web/components/layout/index.ts` — Barrel export
 
 ### Read for Patterns (do not modify)
+
 - `web/types/index.ts` — `Project` interface for sidebar project list
 - `web/lib/utils.ts` — `cn()` for className merging, `getScoreColor()` for project score indicators
 
 ### Off-Limits (never touch)
+
 - All files outside `web/components/layout/`
 - `web/app/layout.tsx` (Worker 1 owns root layout — this worker provides the AppShell component that pages import)
 - All existing claude-seo files
@@ -27,6 +31,7 @@ Create the app shell layout with a floating sidebar for project navigation, a to
 ## Context
 
 ### Layout Architecture
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │  TopNavbar (sticky top, full width)                  │
@@ -54,16 +59,18 @@ Create the app shell layout with a floating sidebar for project navigation, a to
 ```
 
 ### Sidebar Specification
+
 ```tsx
 interface SidebarProps {
   className?: string;
 }
 ```
+
 - **Position**: Fixed left, full height, z-40
 - **Width**: 260px expanded, 64px collapsed (icon-only mode)
 - **Style**: Floating effect — `margin: 12px`, `border-radius: 16px`, background with subtle border, shadow
 - **Sections**:
-  1. Logo/brand area at top ("Claude SEO" with a small icon)
+  1. Logo/brand area at top ("SEONA" with a small icon)
   2. Main navigation links: Dashboard (home icon), Projects (folder icon), New Audit (plus-circle icon)
   3. Divider
   4. "Projects" heading with scrollable list of recent projects (fetched from `/api/projects`)
@@ -74,11 +81,13 @@ interface SidebarProps {
 - Use `"use client"` directive
 
 ### Top Navbar Specification
+
 ```tsx
 interface TopNavbarProps {
   className?: string;
 }
 ```
+
 - **Position**: Sticky top, accounts for sidebar width
 - **Height**: 64px
 - **Content**: Breadcrumbs on left, ThemeToggle + optional actions on right
@@ -86,31 +95,35 @@ interface TopNavbarProps {
 - Use HeroUI `Navbar` compound component if available, or build custom
 
 ### Breadcrumbs Specification
+
 ```tsx
 interface BreadcrumbItem {
   label: string;
-  href?: string;  // if undefined, it's the current page (not a link)
+  href?: string; // if undefined, it's the current page (not a link)
 }
 
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];
 }
 ```
+
 - Show "Dashboard" as root, then path segments
 - Use `next/link` for navigation
 - Separator: `/` or `>` chevron
 - Current page (last item) is bold, not a link
 
 ### PageHeader Specification
+
 ```tsx
 interface PageHeaderProps {
   title: string;
   description?: string;
-  actions?: React.ReactNode;  // buttons to render on the right
+  actions?: React.ReactNode; // buttons to render on the right
 }
 ```
 
 ### Theme Toggle
+
 - Reads and sets `data-theme` attribute on `<html>` element
 - Persists preference in localStorage under key `theme`
 - Options: `light` (default) and `dark` (use `data-theme="zinc-dark"` or just `"dark"`)
@@ -118,15 +131,17 @@ interface PageHeaderProps {
 - Use HeroUI `Button` with `variant="tertiary"` and icon-only
 
 ### AppShell Usage Pattern
+
 The AppShell is NOT placed in root layout (Worker 1's territory). Instead, pages import and use it:
+
 ```tsx
 // In any page file:
-import { AppShell } from '@/components/layout';
+import { AppShell } from "@/components/layout";
 
 export default function DashboardPage() {
   return (
     <AppShell
-      breadcrumbs={[{ label: 'Dashboard' }]}
+      breadcrumbs={[{ label: "Dashboard" }]}
       pageTitle="Dashboard"
       pageDescription="Overview of all your SEO projects"
     >
@@ -135,9 +150,11 @@ export default function DashboardPage() {
   );
 }
 ```
+
 This way Worker 3 doesn't need to modify the root layout.
 
 ## Acceptance Criteria
+
 - [ ] Sidebar renders with logo, nav links, project list section, and collapse toggle
 - [ ] Sidebar collapse state persists in localStorage and toggles between 260px and 64px
 - [ ] Sidebar shows project names with score color indicators (fetches from `/api/projects`)
@@ -153,6 +170,7 @@ This way Worker 3 doesn't need to modify the root layout.
 - [ ] Uses `lucide-react` icons: `LayoutDashboard`, `FolderOpen`, `PlusCircle`, `ChevronLeft`, `ChevronRight`, `Sun`, `Moon`, `Menu`, `X`
 
 ## Technical Guidance
+
 - Use `"use client"` on components that use hooks (sidebar, theme toggle)
 - For the floating sidebar effect: `position: fixed`, `top: 12px`, `left: 12px`, `bottom: 12px`, `border-radius: 16px`, background surface color, subtle border, box-shadow
 - For the collapse animation, use CSS transitions on width: `transition: width 200ms ease-in-out`
@@ -161,10 +179,12 @@ This way Worker 3 doesn't need to modify the root layout.
 - Content area should have `margin-left` matching sidebar width (260px or 64px) with transition
 
 ## Dependencies
+
 - **Requires output from**: `scaffold-foundation` — needs types, utils, package.json
 - **Provides to**: `dashboard-pages` — `AppShell`, `PageHeader` used by all pages
 
 ## Completion Signal
+
 When **all acceptance criteria are met**, output:
 `<promise>LAYOUT_NAVIGATION_COMPLETE</promise>`
 

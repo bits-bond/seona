@@ -8,17 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - 2026-02-19
 
 ### Security
+
 - **SSRF prevention**: Added private IP blocking to `fetch_page.py` and `analyze_visual.py`
 - **Path traversal prevention**: Added output path sanitization to `capture_screenshot.py` and file validation to `parse_html.py`
 - **Install hardening**: Removed `--break-system-packages`, switched to venv-based pip install
 - **requirements.txt**: Now persisted to `~/.claude/skills/seo/` for user retry
 
 ### Fixed
+
 - **YAML frontmatter parsing**: Removed HTML comments before `---` delimiter in 8 files (skills: seo-content, seo-images, seo-programmatic, seo-schema, seo-technical; agents: seo-content, seo-performance, seo-technical). Thanks @kylewhirl for identifying this in the codex-seo fork.
 - **Windows installer**: Merged @kfrancis improvements — `python -m pip`, `py -3` launcher fallback, requirements.txt persistence, non-fatal subagent copy, better error diagnostics (PR #6)
 - **requirements.txt missing after install**: Now copied to skill directory so users can retry (#1)
 
 ### Changed
+
 - Python dependencies now installed in a venv at `~/.claude/skills/seo/.venv/` with `--user` fallback (#2)
 - Playwright marked as explicitly optional in install output
 - Windows installer uses `Resolve-Python` helper for robust Python detection (#5)
@@ -28,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - 2026-02-07
 
 ### Security (CRITICAL)
+
 - **urllib3 ≥2.6.3**: Fixes CVE-2026-21441 (CVSS 8.9) - decompression bypass vulnerability
 - **lxml ≥6.0.2**: Updated from 5.3.2 for additional libxml2 security patches
 - **Pillow ≥12.1.0**: Fixes CVE-2025-48379
@@ -35,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **requests ≥2.32.4**: Fixes CVE-2024-47081, CVE-2024-35195
 
 ### Added
+
 - **GEO (Generative Engine Optimization) major enhancement**:
   - Brand mention analysis (3× more important than backlinks for AI visibility)
   - AI crawler detection (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, etc.)
@@ -49,12 +54,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **E-commerce schema updates**: returnPolicyCountry now required, organization-level policies
 
 ### Changed
+
 - **E-E-A-T framework**: Updated for December 2025 core update - now applies to ALL competitive queries, not just YMYL
 - **SKILL.md description**: Expanded to leverage new 1024-character limit
 - **Schema deprecations expanded**: Added ClaimReview, VehicleListing (June 2025)
 - **WebApplication schema**: Added as correct type for browser-based SaaS (vs SoftwareApplication)
 
 ### Fixed
+
 - Schema-types.md now correctly distinguishes SoftwareApplication (apps) vs WebApplication (SaaS)
 
 ---
@@ -62,7 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-02-07
 
 ### Added
-- Initial release of Claude SEO
+
+- Initial release of SEONA
 - 9 specialized skills: audit, page, sitemap, schema, images, technical, content, geo, plan
 - 6 subagents for parallel analysis: seo-technical, seo-content, seo-schema, seo-sitemap, seo-performance, seo-visual
 - Industry templates: SaaS, local service, e-commerce, publisher, agency, generic
@@ -84,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bounded Python dependency pinning with CVE-aware minimums (lxml >= 5.3.2)
 
 ### Architecture
+
 - Follows Anthropic's official Claude Code skill specification (February 2026)
 - Standard directory layout: `scripts/`, `references/`, `assets/`
 - Valid hook matchers (tool name only, no argument patterns)

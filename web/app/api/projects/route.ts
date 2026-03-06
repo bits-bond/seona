@@ -1,44 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { projects, audits } from '@/lib/db/schema';
-import { desc, sql } from 'drizzle-orm';
+import { projects } from '@/lib/db/schema';
+import { sql } from 'drizzle-orm';
 
 // GET /api/projects — list all projects with computed audit fields
 export async function GET() {
   try {
-    const result = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        url: projects.url,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-        lastAuditScore: sql<number | null>`(
-          SELECT ${audits.overallScore}
-          FROM ${audits}
-          WHERE ${audits.projectId} = ${projects.id}
-            AND ${audits.status} = 'completed'
-          ORDER BY ${audits.completedAt} DESC
-          LIMIT 1
-        )`.as('last_audit_score'),
-        lastAuditDate: sql<Date | null>`(
-          SELECT ${audits.completedAt}
-          FROM ${audits}
-          WHERE ${audits.projectId} = ${projects.id}
-            AND ${audits.status} = 'completed'
-          ORDER BY ${audits.completedAt} DESC
-          LIMIT 1
-        )`.as('last_audit_date'),
-        auditCount: sql<number>`(
-          SELECT COUNT(*)::int
-          FROM ${audits}
-          WHERE ${audits.projectId} = ${projects.id}
-        )`.as('audit_count'),
-      })
-      .from(projects)
-      .orderBy(desc(projects.createdAt));
+    const rows = await db.execute(sql`
+      SELECT
+        p.id,
+        p.name,
+        p.url,
+        p.created_at  AS "createdAt",
+        p.updated_at  AS "updatedAt",
+        (SELECT a.overall_score
+         FROM audits a
+         WHERE a.project_id = p.id AND a.status = 'completed'
+         ORDER BY a.completed_at DESC LIMIT 1
+        ) AS "lastAuditScore",
+        (SELECT a.completed_at
+         FROM audits a
+         WHERE a.project_id = p.id AND a.status = 'completed'
+         ORDER BY a.completed_at DESC LIMIT 1
+        ) AS "lastAuditDate",
+        (SELECT COUNT(*)::int
+         FROM audits a
+         WHERE a.project_id = p.id
+        ) AS "auditCount"
+      FROM projects p
+      ORDER BY p.created_at DESC
+    `);
 
-    return NextResponse.json(result);
+    return NextResponse.json(rows);
   } catch (error) {
     console.error('Failed to fetch projects:', error);
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });

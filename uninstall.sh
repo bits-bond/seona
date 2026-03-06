@@ -2,7 +2,7 @@
 set -euo pipefail
 
 main() {
-    echo "→ Uninstalling Claude SEO..."
+    echo "→ Uninstalling SEONA..."
 
     # Remove main skill (includes venv and requirements.txt)
     rm -rf "${HOME}/.claude/skills/seo"
@@ -17,7 +17,7 @@ main() {
         rm -f "${HOME}/.claude/agents/${agent}.md"
     done
 
-    echo "✓ Claude SEO uninstalled."
+    echo "✓ SEONA uninstalled."
 }
 
 main "$@"

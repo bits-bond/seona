@@ -12,23 +12,45 @@ export function connectAuditStream(
 ): () => void {
   const eventSource = new EventSource(`/api/audits/${auditId}/stream`);
 
-  eventSource.addEventListener('progress', (e) => {
-    const data = JSON.parse((e as MessageEvent).data);
-    onProgress({
-      ...data,
-      timestamp: new Date(data.timestamp),
-    });
-  });
+  eventSource.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
 
-  eventSource.addEventListener('complete', (e) => {
-    onComplete(JSON.parse((e as MessageEvent).data));
-    eventSource.close();
-  });
+      switch (data.type) {
+        case 'connected':
+          onProgress({
+            percentage: 0,
+            stage: 'Connected',
+            message: `Connected to audit stream (status: ${data.status})`,
+            timestamp: new Date(),
+          });
+          break;
+        case 'progress':
+          onProgress({
+            percentage: data.percentage ?? 0,
+            stage: data.status ?? 'Processing',
+            message: data.message ?? 'Audit in progress...',
+            timestamp: new Date(),
+          });
+          break;
+        case 'complete':
+          onComplete({ auditId: data.auditId });
+          eventSource.close();
+          break;
+        case 'error':
+          onError(data.message ?? 'Unknown error');
+          eventSource.close();
+          break;
+      }
+    } catch {
+      // Ignore malformed messages
+    }
+  };
 
-  eventSource.addEventListener('error', () => {
+  eventSource.onerror = () => {
     onError('Connection lost');
     eventSource.close();
-  });
+  };
 
   return () => eventSource.close();
 }

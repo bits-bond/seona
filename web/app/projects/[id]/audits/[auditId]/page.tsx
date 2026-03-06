@@ -10,6 +10,7 @@ import {
   IssuesTable,
   ReportViewer,
 } from '@/components/dashboard';
+import { AuditProgressDisplay } from '@/components/audit/audit-progress';
 import { CATEGORY_CONFIG } from '@/types';
 import { FileSearch, RefreshCw } from 'lucide-react';
 import type { Audit, AuditCategory, AuditIssue, CategoryType } from '@/types';
@@ -28,7 +29,12 @@ export default function AuditDetailPage() {
 
   const { data: audit, isLoading, error, mutate } = useSWR<AuditDetail>(
     `/api/audits/${auditId}`,
-    fetcher
+    fetcher,
+    {
+      // Poll every 5s while audit is running/pending
+      refreshInterval: (data) =>
+        data && (data.status === 'pending' || data.status === 'running') ? 5000 : 0,
+    }
   );
 
   // Fetch project name for breadcrumbs
@@ -62,19 +68,23 @@ export default function AuditDetailPage() {
         })
       : [];
 
+  const isRunning = audit?.status === 'pending' || audit?.status === 'running';
+
   return (
     <AppShell
       breadcrumbs={[
         { label: 'Dashboard', href: '/' },
         { label: 'Projects', href: '/projects' },
         { label: project?.name ?? 'Project', href: `/projects/${projectId}` },
-        { label: `Audit ${audit?.overallScore !== null ? `(${audit?.overallScore})` : ''}` },
+        { label: audit?.overallScore != null ? `Audit (${audit.overallScore})` : 'Audit' },
       ]}
       pageTitle={`Audit Details`}
       pageDescription={
         audit?.completedAt
           ? `Completed on ${new Date(audit.completedAt).toLocaleDateString()}`
-          : 'Audit in progress'
+          : isRunning
+            ? 'Audit in progress...'
+            : 'Audit'
       }
     >
       {isLoading ? (
@@ -104,6 +114,14 @@ export default function AuditDetailPage() {
           title="Audit not found"
           description="The audit you're looking for doesn't exist or has been removed."
         />
+      ) : isRunning ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <h2 className="text-xl font-semibold mb-6">Audit in Progress</h2>
+          <AuditProgressDisplay
+            auditId={auditId}
+            onComplete={() => mutate()}
+          />
+        </div>
       ) : (
         <div className="space-y-6">
           {/* Row 1: Audit Summary */}
@@ -112,7 +130,7 @@ export default function AuditDetailPage() {
           {/* Row 2: Category Cards */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Category Scores</h3>
-            <CategoryCards categories={audit.categories ?? []} />
+            <CategoryCards categories={audit.categories ?? []} className="md:grid-cols-3 lg:grid-cols-4" />
           </div>
 
           {/* Row 3: Charts */}

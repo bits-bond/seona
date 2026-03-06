@@ -1,10 +1,10 @@
-# Claude SEO Installer for Windows
+# SEONA Installer for Windows
 # PowerShell installation script
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "║   Claude SEO - Installer             ║" -ForegroundColor Cyan
+Write-Host "║   SEONA - Installer             ║" -ForegroundColor Cyan
 Write-Host "║   Claude Code SEO Skill              ║" -ForegroundColor Cyan
 Write-Host "════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host ""
@@ -66,14 +66,14 @@ try {
 # Set paths
 $SkillDir = "$env:USERPROFILE\.claude\skills\seo"
 $AgentDir = "$env:USERPROFILE\.claude\agents"
-$RepoUrl = "https://github.com/AgriciDaniel/claude-seo"
+$RepoUrl = "https://github.com/DDX1/seona"
 
 # Create directories
 New-Item -ItemType Directory -Force -Path $SkillDir | Out-Null
 New-Item -ItemType Directory -Force -Path $AgentDir | Out-Null
 
 # Clone to temp directory
-$TempDir = Join-Path $env:TEMP "claude-seo-install"
+$TempDir = Join-Path $env:TEMP "seona-install"
 if (Test-Path $TempDir) {
     Remove-Item -Recurse -Force $TempDir
 }
@@ -81,7 +81,7 @@ if (Test-Path $TempDir) {
 $keepTemp = ($env:CLAUDE_SEO_KEEP_TEMP -eq '1')
 
 try {
-    Write-Host "↓ Downloading Claude SEO..." -ForegroundColor Yellow
+    Write-Host "↓ Downloading SEONA..." -ForegroundColor Yellow
     $clone = Invoke-External -Exe 'git' -Args @('clone','--depth','1',$RepoUrl,$TempDir) -Quiet
     if ($clone.ExitCode -ne 0) {
         throw "git clone failed. Output:`n$($clone.Output -join "`n")"
@@ -194,7 +194,7 @@ try {
 }
 
 Write-Host ""
-Write-Host "✓ Claude SEO installed successfully!" -ForegroundColor Green
+Write-Host "✓ SEONA installed successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Usage:" -ForegroundColor Cyan
 Write-Host "  1. Start Claude Code:  claude"

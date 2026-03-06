@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { projects, audits } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // GET /api/projects/[id] — single project with its audits
 export async function GET(
   request: NextRequest,
@@ -10,6 +12,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    if (!UUID_RE.test(id)) {
+      return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+    }
 
     const project = await db.query.projects.findFirst({
       where: eq(projects.id, id),
@@ -25,7 +30,17 @@ export async function GET(
       .where(eq(audits.projectId, id))
       .orderBy(desc(audits.createdAt));
 
-    return NextResponse.json({ ...project, audits: projectAudits });
+    // Compute fields expected by the Project type
+    const completedAudits = projectAudits.filter(a => a.status === 'completed');
+    const latestCompleted = completedAudits[0]; // already sorted desc
+
+    return NextResponse.json({
+      ...project,
+      lastAuditScore: latestCompleted?.overallScore ?? null,
+      lastAuditDate: latestCompleted?.completedAt ?? null,
+      auditCount: projectAudits.length,
+      audits: projectAudits,
+    });
   } catch (error) {
     console.error('Failed to fetch project:', error);
     return NextResponse.json({ error: 'Failed to fetch project' }, { status: 500 });

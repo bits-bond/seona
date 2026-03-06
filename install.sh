@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Claude SEO Installer
+# SEONA Installer
 # Wraps everything in main() to prevent partial execution on network failure
 
 main() {
     SKILL_DIR="${HOME}/.claude/skills/seo"
     AGENT_DIR="${HOME}/.claude/agents"
-    REPO_URL="https://github.com/AgriciDaniel/claude-seo"
+    REPO_URL="https://github.com/DDX1/seona"
 
     echo "════════════════════════════════════════"
-    echo "║   Claude SEO - Installer             ║"
+    echo "║   SEONA - Installer             ║"
     echo "║   Claude Code SEO Skill              ║"
     echo "════════════════════════════════════════"
     echo ""
@@ -31,16 +31,16 @@ main() {
     TEMP_DIR=$(mktemp -d)
     trap "rm -rf ${TEMP_DIR}" EXIT
 
-    echo "↓ Downloading Claude SEO..."
-    git clone --depth 1 "${REPO_URL}" "${TEMP_DIR}/claude-seo" 2>/dev/null
+    echo "↓ Downloading SEONA..."
+    git clone --depth 1 "${REPO_URL}" "${TEMP_DIR}/seona" 2>/dev/null
 
     # Copy skill files
     echo "→ Installing skill files..."
-    cp -r "${TEMP_DIR}/claude-seo/seo/"* "${SKILL_DIR}/"
+    cp -r "${TEMP_DIR}/seona/seo/"* "${SKILL_DIR}/"
 
     # Copy sub-skills
-    if [ -d "${TEMP_DIR}/claude-seo/skills" ]; then
-        for skill_dir in "${TEMP_DIR}/claude-seo/skills"/*/; do
+    if [ -d "${TEMP_DIR}/seona/skills" ]; then
+        for skill_dir in "${TEMP_DIR}/seona/skills"/*/; do
             skill_name=$(basename "${skill_dir}")
             target="${HOME}/.claude/skills/${skill_name}"
             mkdir -p "${target}"
@@ -49,47 +49,47 @@ main() {
     fi
 
     # Copy schema templates
-    if [ -d "${TEMP_DIR}/claude-seo/schema" ]; then
+    if [ -d "${TEMP_DIR}/seona/schema" ]; then
         mkdir -p "${SKILL_DIR}/schema"
-        cp -r "${TEMP_DIR}/claude-seo/schema/"* "${SKILL_DIR}/schema/"
+        cp -r "${TEMP_DIR}/seona/schema/"* "${SKILL_DIR}/schema/"
     fi
 
     # Copy reference docs
-    if [ -d "${TEMP_DIR}/claude-seo/pdf" ]; then
+    if [ -d "${TEMP_DIR}/seona/pdf" ]; then
         mkdir -p "${SKILL_DIR}/pdf"
-        cp -r "${TEMP_DIR}/claude-seo/pdf/"* "${SKILL_DIR}/pdf/"
+        cp -r "${TEMP_DIR}/seona/pdf/"* "${SKILL_DIR}/pdf/"
     fi
 
     # Copy agents
     echo "→ Installing subagents..."
-    cp -r "${TEMP_DIR}/claude-seo/agents/"*.md "${AGENT_DIR}/" 2>/dev/null || true
+    cp -r "${TEMP_DIR}/seona/agents/"*.md "${AGENT_DIR}/" 2>/dev/null || true
 
     # Copy shared scripts
-    if [ -d "${TEMP_DIR}/claude-seo/scripts" ]; then
+    if [ -d "${TEMP_DIR}/seona/scripts" ]; then
         mkdir -p "${SKILL_DIR}/scripts"
-        cp -r "${TEMP_DIR}/claude-seo/scripts/"* "${SKILL_DIR}/scripts/"
+        cp -r "${TEMP_DIR}/seona/scripts/"* "${SKILL_DIR}/scripts/"
     fi
 
     # Copy hooks
-    if [ -d "${TEMP_DIR}/claude-seo/hooks" ]; then
+    if [ -d "${TEMP_DIR}/seona/hooks" ]; then
         mkdir -p "${SKILL_DIR}/hooks"
-        cp -r "${TEMP_DIR}/claude-seo/hooks/"* "${SKILL_DIR}/hooks/"
+        cp -r "${TEMP_DIR}/seona/hooks/"* "${SKILL_DIR}/hooks/"
         chmod +x "${SKILL_DIR}/hooks/"*.sh 2>/dev/null || true
         chmod +x "${SKILL_DIR}/hooks/"*.py 2>/dev/null || true
     fi
 
     # Copy requirements.txt to skill dir so users can retry later
-    cp "${TEMP_DIR}/claude-seo/requirements.txt" "${SKILL_DIR}/requirements.txt" 2>/dev/null || true
+    cp "${TEMP_DIR}/seona/requirements.txt" "${SKILL_DIR}/requirements.txt" 2>/dev/null || true
 
     # Install Python dependencies (venv preferred, --user fallback)
     echo "→ Installing Python dependencies..."
     VENV_DIR="${SKILL_DIR}/.venv"
     if python3 -m venv "${VENV_DIR}" 2>/dev/null; then
-        "${VENV_DIR}/bin/pip" install --quiet -r "${TEMP_DIR}/claude-seo/requirements.txt" 2>/dev/null && \
+        "${VENV_DIR}/bin/pip" install --quiet -r "${TEMP_DIR}/seona/requirements.txt" 2>/dev/null && \
             echo "  ✓ Installed in venv at ${VENV_DIR}" || \
             echo "  ⚠  Venv pip install failed. Run: ${VENV_DIR}/bin/pip install -r ${SKILL_DIR}/requirements.txt"
     else
-        pip install --quiet --user -r "${TEMP_DIR}/claude-seo/requirements.txt" 2>/dev/null || \
+        pip install --quiet --user -r "${TEMP_DIR}/seona/requirements.txt" 2>/dev/null || \
         echo "  ⚠  Could not auto-install. Run: pip install --user -r ${SKILL_DIR}/requirements.txt"
     fi
 
@@ -104,7 +104,7 @@ main() {
     fi
 
     echo ""
-    echo "✓ Claude SEO installed successfully!"
+    echo "✓ SEONA installed successfully!"
     echo ""
     echo "Usage:"
     echo "  1. Start Claude Code:  claude"

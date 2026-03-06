@@ -14,13 +14,13 @@ Optional:
 ### Unix/macOS/Linux
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AgriciDaniel/claude-seo/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DDX1/seona/main/install.sh | bash
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-irm https://raw.githubusercontent.com/AgriciDaniel/claude-seo/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/DDX1/seona/main/install.ps1 | iex
 ```
 
 ## Manual Installation
@@ -28,8 +28,8 @@ irm https://raw.githubusercontent.com/AgriciDaniel/claude-seo/main/install.ps1 |
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/AgriciDaniel/claude-seo.git
-cd claude-seo
+git clone https://github.com/DDX1/seona.git
+cd seona
 ```
 
 2. **Run the installer**
@@ -85,10 +85,74 @@ claude
 
 You should see a help message or prompt for a URL.
 
+## Web Dashboard (Optional)
+
+SEONA includes a full web dashboard for visualizing audit results with charts and reports.
+
+### Requirements
+
+- **Node.js 18+** and **npm**
+- **Docker** (for PostgreSQL database)
+
+### Setup
+
+1. **Start the database**
+
+```bash
+cd web
+docker compose up -d
+```
+
+2. **Install dependencies**
+
+```bash
+npm install
+```
+
+3. **Configure environment**
+
+```bash
+cp .env.example .env
+```
+
+The defaults work out of the box with the Docker container.
+
+4. **Push the database schema**
+
+```bash
+npm run db:push
+```
+
+5. **Seed sample data** (optional)
+
+```bash
+npm run db:seed
+```
+
+6. **Start the dev server**
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### How It Works
+
+The dashboard spawns Claude Code in the background when you trigger an audit from the UI. The CLI runs the `/seo audit` skill, then the results are parsed and stored in PostgreSQL. You can view scores, category breakdowns, issues, and full markdown reports — all from the browser.
+
+### Dashboard Database Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run db:push` | Push schema changes to the database |
+| `npm run db:seed` | Seed sample audit data |
+| `npm run db:studio` | Open Drizzle Studio (database browser) |
+
 ## Uninstallation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AgriciDaniel/claude-seo/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DDX1/seona/main/uninstall.sh | bash
 ```
 
 Or manually:
@@ -116,10 +180,10 @@ To upgrade to the latest version:
 
 ```bash
 # Uninstall current version
-curl -fsSL https://raw.githubusercontent.com/AgriciDaniel/claude-seo/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DDX1/seona/main/uninstall.sh | bash
 
 # Install new version
-curl -fsSL https://raw.githubusercontent.com/AgriciDaniel/claude-seo/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DDX1/seona/main/install.sh | bash
 ```
 
 ## Troubleshooting

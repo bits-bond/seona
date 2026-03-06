@@ -46,12 +46,13 @@ export function ScoreGauge({
   animated = true,
   className,
 }: ScoreGaugeProps) {
+  const safeScore = Number.isFinite(score) ? score : 0;
   const dimension = SIZE_MAP[size];
-  const color = getScoreColor(score);
+  const color = getScoreColor(safeScore);
   const fillColor = SCORE_COLORS[color] ?? "var(--chart-1)";
 
   const data = [
-    { name: "score", value: score, fill: fillColor },
+    { name: "score", value: safeScore, fill: fillColor },
   ];
 
   const fontSize = size === "sm" ? "text-xl" : size === "md" ? "text-3xl" : "text-5xl";
@@ -86,11 +87,11 @@ export function ScoreGauge({
 
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className={cn("font-bold leading-none", fontSize)}>
-          {Math.round(score)}
+          {Math.round(safeScore)}
         </span>
         {showLabel && (
           <span className={cn("mt-1 text-muted-foreground", labelSize)}>
-            {getScoreLabel(score)}
+            {getScoreLabel(safeScore)}
           </span>
         )}
       </div>

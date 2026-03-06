@@ -13,8 +13,19 @@ export async function GET(
 
   const stream = new ReadableStream({
     async start(controller) {
+      let closed = false;
       const sendEvent = (data: Record<string, unknown>) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        } catch {
+          closed = true;
+        }
+      };
+      const safeClose = () => {
+        if (closed) return;
+        closed = true;
+        try { controller.close(); } catch { /* already closed */ }
       };
 
       // Verify audit exists
@@ -24,31 +35,31 @@ export async function GET(
 
       if (!audit) {
         sendEvent({ type: 'error', message: 'Audit not found' });
-        controller.close();
+        safeClose();
         return;
       }
 
       // If already completed or failed, send final event immediately
       if (audit.status === 'completed') {
         sendEvent({ type: 'complete', auditId: id, score: audit.overallScore });
-        controller.close();
+        safeClose();
         return;
       }
 
       if (audit.status === 'failed') {
         sendEvent({ type: 'error', message: audit.errorMessage || 'Audit failed' });
-        controller.close();
+        safeClose();
         return;
       }
 
       // Poll for status changes every 2 seconds
       let pollCount = 0;
-      const maxPolls = 300; // 10 minutes max (300 * 2s)
+      const maxPolls = 450; // 15 minutes max (450 * 2s)
 
       const poll = async () => {
         if (pollCount >= maxPolls) {
           sendEvent({ type: 'error', message: 'Stream timeout' });
-          controller.close();
+          safeClose();
           return;
         }
 
@@ -59,7 +70,7 @@ export async function GET(
 
           if (!current) {
             sendEvent({ type: 'error', message: 'Audit not found' });
-            controller.close();
+            safeClose();
             return;
           }
 
@@ -79,7 +90,7 @@ export async function GET(
               auditId: id,
               score: current.overallScore,
             });
-            controller.close();
+            safeClose();
             return;
           }
 
@@ -88,7 +99,7 @@ export async function GET(
               type: 'error',
               message: current.errorMessage || 'Audit failed',
             });
-            controller.close();
+            safeClose();
             return;
           }
 
@@ -96,14 +107,14 @@ export async function GET(
 
           // Check if client disconnected
           if (request.signal.aborted) {
-            controller.close();
+            safeClose();
             return;
           }
 
           setTimeout(poll, 2000);
         } catch (error) {
           sendEvent({ type: 'error', message: 'Internal server error' });
-          controller.close();
+          safeClose();
         }
       };
 

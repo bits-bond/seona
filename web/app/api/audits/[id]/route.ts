@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { audits, auditCategories, auditIssues } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // GET /api/audits/[id] — single audit with categories and issues
 export async function GET(
   request: NextRequest,
@@ -10,6 +12,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    if (!UUID_RE.test(id)) {
+      return NextResponse.json({ error: 'Invalid audit ID' }, { status: 400 });
+    }
 
     const audit = await db.query.audits.findFirst({
       where: eq(audits.id, id),

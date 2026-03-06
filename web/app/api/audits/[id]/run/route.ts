@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { audits, projects } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { startAudit, isClaudeCliAvailable, isAuditRunning } from '@/lib/audit-engine';
 
 export async function POST(
@@ -26,23 +29,15 @@ export async function POST(
     );
   }
 
-  // Fetch the audit record to get the URL
-  const baseUrl = request.nextUrl.origin;
-  let audit;
+  // Fetch the audit record directly from DB
+  const audit = await db.query.audits.findFirst({
+    where: eq(audits.id, auditId),
+  });
 
-  try {
-    const response = await fetch(`${baseUrl}/api/audits/${auditId}`);
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Audit not found' },
-        { status: 404 },
-      );
-    }
-    audit = await response.json();
-  } catch {
+  if (!audit) {
     return NextResponse.json(
-      { error: 'Failed to fetch audit record' },
-      { status: 500 },
+      { error: 'Audit not found' },
+      { status: 404 },
     );
   }
 
@@ -60,16 +55,21 @@ export async function POST(
     );
   }
 
-  // Determine the URL — either from the audit record or from the project
-  const url = audit.url || audit.project?.url;
+  // Get the project URL
+  const project = await db.query.projects.findFirst({
+    where: eq(projects.id, audit.projectId),
+  });
+
+  const url = project?.url;
   if (!url) {
     return NextResponse.json(
-      { error: 'No URL found for this audit' },
+      { error: 'No URL found for this audit\'s project' },
       { status: 400 },
     );
   }
 
   // Start the audit asynchronously and return immediately
+  const baseUrl = request.nextUrl.origin;
   startAudit(auditId, url, baseUrl);
 
   return NextResponse.json(

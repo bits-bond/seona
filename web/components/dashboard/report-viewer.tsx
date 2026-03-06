@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { MarkdownRenderer } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { FileText, ListChecks } from 'lucide-react';
+import { FileText, ListChecks, Copy, Check } from 'lucide-react';
 
 interface ReportViewerProps {
   fullReportMd: string | null;
@@ -23,27 +23,48 @@ export function ReportViewer({ fullReportMd, actionPlanMd, className }: ReportVi
 
   const content = activeTab === 'report' ? fullReportMd : actionPlanMd;
 
+  const [copied, setCopied] = useState(false);
+  const handleCopy = useCallback(() => {
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [content]);
+
   return (
     <div className={cn('', className)}>
       <h3 className="text-lg font-semibold mb-4">Reports</h3>
 
       {/* Tab bar */}
-      <div className="flex border-b border-divider mb-4">
-        {tabs.map((tab) => (
+      <div className="flex items-center border-b border-divider mb-4">
+        <div className="flex flex-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
+                activeTab === tab.key
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-default-500 hover:text-foreground hover:border-default-300'
+              )}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {content && (
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
-              activeTab === tab.key
-                ? 'border-primary text-primary'
-                : 'border-transparent text-default-500 hover:text-foreground hover:border-default-300'
-            )}
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-3 py-1.5 mb-1 text-xs font-medium rounded-lg bg-default-100 hover:bg-default-200 text-default-600 hover:text-foreground transition-colors"
+            title="Copy markdown"
           >
-            {tab.icon}
-            {tab.label}
+            {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? 'Copied' : 'Copy'}
           </button>
-        ))}
+        )}
       </div>
 
       {/* Content */}

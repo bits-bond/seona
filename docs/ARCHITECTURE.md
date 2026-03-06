@@ -2,7 +2,7 @@
 
 ## Overview
 
-Claude SEO follows Anthropic's official Claude Code skill specification with a modular, multi-skill architecture.
+SEONA follows Anthropic's official Claude Code skill specification with a modular, multi-skill architecture.
 
 ## Directory Structure
 
@@ -47,6 +47,7 @@ Claude SEO follows Anthropic's official Claude Code skill specification with a m
 Skills are markdown files with YAML frontmatter that define capabilities and instructions.
 
 **SKILL.md Format:**
+
 ```yaml
 ---
 name: skill-name
@@ -54,7 +55,6 @@ description: >
   When to use this skill. Include activation keywords
   and concrete use cases.
 ---
-
 # Skill Title
 
 Instructions and documentation...
@@ -65,13 +65,13 @@ Instructions and documentation...
 Subagents are specialized workers that can be delegated tasks. They have their own context and tools.
 
 **Agent Format:**
+
 ```yaml
 ---
 name: agent-name
 description: What this agent does.
 tools: Read, Bash, Write, Glob, Grep
 ---
-
 Instructions for the agent...
 ```
 
@@ -163,13 +163,13 @@ User Request (e.g., /seo page)
 
 ## File Naming Conventions
 
-| Type | Pattern | Example |
-|------|---------|---------|
-| Skill | `seo-{name}/SKILL.md` | `seo-audit/SKILL.md` |
-| Agent | `seo-{name}.md` | `seo-technical.md` |
-| Reference | `{topic}.md` | `cwv-thresholds.md` |
-| Script | `{action}_{target}.py` | `fetch_page.py` |
-| Template | `{industry}.md` | `saas.md` |
+| Type      | Pattern                | Example              |
+| --------- | ---------------------- | -------------------- |
+| Skill     | `seo-{name}/SKILL.md`  | `seo-audit/SKILL.md` |
+| Agent     | `seo-{name}.md`        | `seo-technical.md`   |
+| Reference | `{topic}.md`           | `cwv-thresholds.md`  |
+| Script    | `{action}_{target}.py` | `fetch_page.py`      |
+| Template  | `{industry}.md`        | `saas.md`            |
 
 ## Extension Points
 
