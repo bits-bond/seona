@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import { execSync } from 'node:child_process';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { parseFullReport, parseActionPlan } from './parser';
 import type { AuditProgress } from './types';
@@ -72,6 +72,45 @@ function extractDomain(url: string): string {
 }
 
 /**
+ * Find the output directory for an audit.
+ * The CLI may save to a different domain than the input URL (e.g. redirects, typos).
+ * Strategy: try exact domain first, then find the most recently modified dir in output/.
+ */
+function findOutputDir(domain: string, auditStartTime: Date): string {
+  const exactDir = path.join(PROJECT_ROOT, 'output', domain);
+  if (existsSync(path.join(exactDir, 'FULL-AUDIT-REPORT.md'))) {
+    return exactDir;
+  }
+
+  // Scan output/ for directories modified after the audit started
+  const outputRoot = path.join(PROJECT_ROOT, 'output');
+  if (!existsSync(outputRoot)) return exactDir;
+
+  try {
+    const dirs = readdirSync(outputRoot, { withFileTypes: true })
+      .filter(d => d.isDirectory())
+      .map(d => {
+        const dirPath = path.join(outputRoot, d.name);
+        const reportPath = path.join(dirPath, 'FULL-AUDIT-REPORT.md');
+        if (!existsSync(reportPath)) return null;
+        const mtime = statSync(reportPath).mtime;
+        return { name: d.name, dirPath, mtime };
+      })
+      .filter((d): d is NonNullable<typeof d> => d !== null && d.mtime >= auditStartTime)
+      .sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
+
+    if (dirs.length > 0) {
+      console.error(`[audit-runner] Output dir mismatch: expected ${domain}, found ${dirs[0].name}`);
+      return dirs[0].dirPath;
+    }
+  } catch {
+    // fallback to exact match
+  }
+
+  return exactDir;
+}
+
+/**
  * Detect progress stage from a CLI output line.
  */
 function detectProgress(line: string, currentPercentage: number): AuditProgress | null {
@@ -116,12 +155,14 @@ export async function startAudit(
     startedAt: new Date().toISOString(),
   });
 
+  const auditStartTime = new Date();
+
   // Set initial progress
   auditProgressMap.set(auditId, {
     percentage: 5,
     stage: 'Starting audit',
     message: `Starting SEO audit for ${url}`,
-    timestamp: new Date(),
+    timestamp: auditStartTime,
   });
 
   // Strip CLAUDECODE env var to allow spawning claude inside a dev server
@@ -202,7 +243,8 @@ export async function startAudit(
     });
 
     try {
-      const outputDir = path.join(PROJECT_ROOT, 'output', domain);
+      const outputDir = findOutputDir(domain, auditStartTime);
+      console.error(`[audit-runner] Looking for output in: ${outputDir}`);
       const reportPath = path.join(outputDir, 'FULL-AUDIT-REPORT.md');
       const actionPlanPath = path.join(outputDir, 'ACTION-PLAN.md');
 

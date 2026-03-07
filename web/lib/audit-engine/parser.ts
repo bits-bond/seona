@@ -24,8 +24,8 @@ export function parseFullReport(markdown: string): ParsedReport {
   const overallScoreMatch = markdown.match(/(?:#{2,3}\s*(?:Overall\s+)?SEO Health Score:\s*|(?:Overall\s+)?SEO Health Score\*{0,2}\s*\|\s*\*{0,2})(\d+)\s*\/\s*100/);
   const overallScore = overallScoreMatch ? parseInt(overallScoreMatch[1], 10) : 0;
 
-  const businessTypeMatch = markdown.match(/\*\*Business Type(?:\s+Detected)?:\*\*\s*(.+)/);
-  const businessType = businessTypeMatch ? businessTypeMatch[1].trim() : null;
+  const businessTypeMatch = markdown.match(/\*\*Business(?:\s+Type)?(?:\s+Detected)?:\*\*\s*(.+)/);
+  const businessType = businessTypeMatch ? businessTypeMatch[1].trim().replace(/\s*—.*$/, '') : null;
 
   const pagesCrawledMatch = markdown.match(/\*\*Pages (?:Crawled|Discovered):\*\*\s*(\d+)/);
   const pagesCrawled = pagesCrawledMatch ? parseInt(pagesCrawledMatch[1], 10) : null;
@@ -143,8 +143,8 @@ export function parseActionPlan(markdown: string): ParsedActionPlan {
       continue;
     }
 
-    // Detect issue title: ### N. Title
-    const titleMatch = line.match(/^### \d+\.\s+(.+)/);
+    // Detect issue title: ### N. Title  or  ### C1. Title  or  ### H2. Title
+    const titleMatch = line.match(/^### (?:[A-Z]?\d+)\.\s+(.+)/);
     if (titleMatch) {
       flushIssue();
       currentTitle = titleMatch[1].trim();
