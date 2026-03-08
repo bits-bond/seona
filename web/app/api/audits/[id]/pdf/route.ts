@@ -124,7 +124,7 @@ export async function GET(
     const typeLabel = type === 'executive' ? 'Executive' : 'Full_Report';
     const filename = `SEONA_${typeLabel}_${domain}_${dateStr}_${lang.toUpperCase()}.pdf`;
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
