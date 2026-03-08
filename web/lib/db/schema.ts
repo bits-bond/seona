@@ -21,6 +21,7 @@ export const audits = pgTable('audits', {
   fullReportMd: text('full_report_md'),
   actionPlanMd: text('action_plan_md'),
   errorMessage: text('error_message'),
+  language: varchar('language', { length: 5 }).notNull().default('en'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

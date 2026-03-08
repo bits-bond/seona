@@ -8,6 +8,14 @@ const CATEGORY_MAP: Record<string, CategoryType> = {
   'Performance (CWV)': 'performance',
   'Images': 'images',
   'AI Search Readiness': 'ai_readiness',
+  // German category names
+  'Technische SEO': 'technical',
+  'Inhaltsqualität': 'content',
+  'On-Page-SEO': 'on_page',
+  'Schema / Strukturierte Daten': 'schema',
+  'Leistung (CWV)': 'performance',
+  'Bilder': 'images',
+  'KI-Suchbereitschaft': 'ai_readiness',
 };
 
 const SEVERITY_HEADERS: Record<string, 'critical' | 'high' | 'medium' | 'low'> = {
@@ -15,6 +23,11 @@ const SEVERITY_HEADERS: Record<string, 'critical' | 'high' | 'medium' | 'low'> =
   'HIGH': 'high',
   'MEDIUM': 'medium',
   'LOW': 'low',
+  // German severity headers
+  'KRITISCH': 'critical',
+  'HOCH': 'high',
+  'MITTEL': 'medium',
+  'NIEDRIG': 'low',
 };
 
 /**

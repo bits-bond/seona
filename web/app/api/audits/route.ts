@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       .values({
         projectId: body.projectId,
         status: 'pending',
+        ...(body.language && { language: body.language }),
       })
       .returning();
 

@@ -135,6 +135,7 @@ export async function startAudit(
   auditId: string,
   url: string,
   baseApiUrl: string,
+  language: string = 'en',
 ): Promise<void> {
   if (!isClaudeCliAvailable()) {
     await updateAuditStatus(baseApiUrl, auditId, 'failed', {
@@ -148,7 +149,10 @@ export async function startAudit(
   }
 
   const domain = extractDomain(url);
-  const prompt = `Run /seo-audit ${url}. Save all output files to output/${domain}/`;
+  let prompt = `Run /seo-audit ${url}. Save all output files to output/${domain}/`;
+  if (language === 'de') {
+    prompt += ` Write the entire audit report and action plan in German (Deutsch). All findings, descriptions, recommendations must be in German. Keep technical terms (robots.txt, JSON-LD, CWV) in their original form.`;
+  }
 
   // Update status to running
   await updateAuditStatus(baseApiUrl, auditId, 'running', {

@@ -65,6 +65,7 @@ export async function PUT(
     if (body.fullReportMd !== undefined) updateData.fullReportMd = body.fullReportMd;
     if (body.actionPlanMd !== undefined) updateData.actionPlanMd = body.actionPlanMd;
     if (body.errorMessage !== undefined) updateData.errorMessage = body.errorMessage;
+    if (body.language !== undefined) updateData.language = body.language;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });

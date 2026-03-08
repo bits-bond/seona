@@ -1,3 +1,5 @@
+export type Language = 'en' | 'de';
+
 export interface Project {
   id: string;
   name: string;
@@ -20,6 +22,7 @@ export interface Audit {
   completedAt: Date | null;
   fullReportMd: string | null;
   actionPlanMd: string | null;
+  language: Language;
   createdAt: Date;
 }
 

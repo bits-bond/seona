@@ -70,7 +70,7 @@ export async function POST(
 
   // Start the audit asynchronously and return immediately
   const baseUrl = request.nextUrl.origin;
-  startAudit(auditId, url, baseUrl);
+  startAudit(auditId, url, baseUrl, audit.language ?? 'en');
 
   return NextResponse.json(
     {
