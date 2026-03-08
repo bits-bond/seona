@@ -1,14 +1,13 @@
 {
-  "mission": "Build a fully functional end-to-end web app with HeroUI v3, Next.js 15, and Claude Code CLI integration.",
-  "status": "merged",
-  "created": "2026-03-02",
+  "mission": "SEONA Service Enhancement Suite — 7 features: Backlink Analysis, Competitor Gap, GSC Integration, PDF Export (DE/EN), Keyword Research, GEO Expansion, Automated Fixes.",
+  "status": "ready",
+  "created": "2026-03-08",
   "branch": "main",
   "workers": [
-    { "slug": "scaffold-foundation", "status": "merged", "branch": "worker/scaffold-foundation", "worktree": null },
-    { "slug": "ui-components", "status": "merged", "branch": "worker/ui-components", "worktree": null },
-    { "slug": "layout-navigation", "status": "merged", "branch": "worker/layout-navigation", "worktree": null },
-    { "slug": "database-api", "status": "merged", "branch": "worker/database-api", "worktree": null },
-    { "slug": "dashboard-pages", "status": "merged", "branch": "worker/dashboard-pages", "worktree": null },
-    { "slug": "audit-engine", "status": "merged", "branch": "worker/audit-engine", "worktree": null }
+    { "slug": "pdf-export", "status": "ready", "branch": "worker/pdf-export", "worktree": null },
+    { "slug": "backlink-competitor", "status": "ready", "branch": "worker/backlink-competitor", "worktree": null },
+    { "slug": "gsc-integration", "status": "ready", "branch": "worker/gsc-integration", "worktree": null },
+    { "slug": "keyword-research", "status": "ready", "branch": "worker/keyword-research", "worktree": null },
+    { "slug": "geo-expansion-fixes", "status": "ready", "branch": "worker/geo-expansion-fixes", "worktree": null }
   ]
 }

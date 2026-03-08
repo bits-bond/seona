@@ -52,14 +52,10 @@ docker compose up -d
 - Commit format: `<type>: <description>` (types: feat, fix, refactor, style)
 
 ## Off-Limits
-Never modify:
-- `skills/` — Claude Code skill definitions
-- `agents/` — Subagent definitions
-- `seo/` — Main orchestrator skill
-- `scripts/` — Python utility scripts
+Never modify (unless your spec explicitly authorizes it):
 - `hooks/` — Git hooks
-- `schema/` — Schema templates
-- `docs/` — Existing documentation
 - `install.sh`, `install.ps1`, `uninstall.sh` — Installation scripts
 - `README.md` — Project README
-- `.gitignore` — Git ignore rules (may need additions for web/)
+- `.gitignore` — Git ignore rules
+- `docker-compose.yml` — Database config
+- Other workers' files — check your spec for allowed file paths
