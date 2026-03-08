@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import useSWR from 'swr';
 import { AppShell } from '@/components/layout';
 import { LoadingSkeleton } from '@/components/ui';
-import { Play, Plus, RefreshCw, Globe, FolderOpen } from 'lucide-react';
-import type { Project } from '@/types';
+import { Play, Plus, RefreshCw, Globe, FolderOpen, Languages } from 'lucide-react';
+import type { Project, Language } from '@/types';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -21,6 +21,7 @@ function NewAuditForm() {
   const [isNewProject, setIsNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [url, setUrl] = useState('');
+  const [language, setLanguage] = useState<Language>('en');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -68,7 +69,7 @@ function NewAuditForm() {
       const res = await fetch('/api/audits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, url }),
+        body: JSON.stringify({ projectId, url, language }),
       });
 
       if (!res.ok) {
@@ -202,6 +203,31 @@ function NewAuditForm() {
                 URL is pre-filled from the selected project.
               </p>
             )}
+          </div>
+        </div>
+
+        {/* Language Selection */}
+        <div className="p-6 rounded-xl bg-content1 border border-divider">
+          <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+            <Languages className="h-5 w-5 text-default-500" />
+            Report Language
+          </h3>
+          <div>
+            <label htmlFor="language" className="block text-sm font-medium text-foreground mb-1.5">
+              Audit Language
+            </label>
+            <select
+              id="language"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as Language)}
+              className="w-full px-3 py-2 rounded-lg border border-divider bg-content2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="en">English (EN)</option>
+              <option value="de">Deutsch (DE)</option>
+            </select>
+            <p className="text-xs text-default-400 mt-1.5">
+              The audit report and analysis will be generated in the selected language.
+            </p>
           </div>
         </div>
 

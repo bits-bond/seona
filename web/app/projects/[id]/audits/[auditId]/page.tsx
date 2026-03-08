@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import useSWR from 'swr';
 import { AppShell } from '@/components/layout';
@@ -12,7 +13,7 @@ import {
 } from '@/components/dashboard';
 import { AuditProgressDisplay } from '@/components/audit/audit-progress';
 import { CATEGORY_CONFIG } from '@/types';
-import { FileSearch, RefreshCw } from 'lucide-react';
+import { FileSearch, RefreshCw, Download, FileText, ChevronDown, Loader2 } from 'lucide-react';
 import type { Audit, AuditCategory, AuditIssue, CategoryType } from '@/types';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -20,6 +21,79 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 interface AuditDetail extends Audit {
   categories: AuditCategory[];
   issues: AuditIssue[];
+}
+
+function PdfExportDropdown({ auditId }: { auditId: string }) {
+  const [open, setOpen] = useState(false);
+  const [generating, setGenerating] = useState<string | null>(null);
+
+  const handleDownload = useCallback(async (type: 'executive' | 'full') => {
+    setGenerating(type);
+    setOpen(false);
+    try {
+      const res = await fetch(`/api/audits/${auditId}/pdf?type=${type}`);
+      if (!res.ok) throw new Error('PDF generation failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ?? `SEONA_${type}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF download error:', err);
+    } finally {
+      setGenerating(null);
+    }
+  }, [auditId]);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        disabled={generating !== null}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+      >
+        {generating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Download className="h-4 w-4" />
+        )}
+        {generating ? 'Generating...' : 'Export PDF'}
+        <ChevronDown className="h-3.5 w-3.5" />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-lg border border-divider bg-content1 shadow-lg overflow-hidden">
+            <button
+              onClick={() => handleDownload('executive')}
+              className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-default-100 transition-colors"
+            >
+              <FileText className="h-5 w-5 text-primary" />
+              <div>
+                <div className="text-sm font-medium">Executive Summary</div>
+                <div className="text-xs text-default-500">2-5 page overview</div>
+              </div>
+            </button>
+            <button
+              onClick={() => handleDownload('full')}
+              className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-default-100 transition-colors border-t border-divider"
+            >
+              <FileText className="h-5 w-5 text-success" />
+              <div>
+                <div className="text-sm font-medium">Full Technical Report</div>
+                <div className="text-xs text-default-500">15-25 page detailed analysis</div>
+              </div>
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function AuditDetailPage() {
@@ -85,6 +159,9 @@ export default function AuditDetailPage() {
           : isRunning
             ? 'Audit in progress...'
             : 'Audit'
+      }
+      pageActions={
+        audit?.status === 'completed' ? <PdfExportDropdown auditId={auditId} /> : undefined
       }
     >
       {isLoading ? (
