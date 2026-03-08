@@ -23,8 +23,8 @@ allowed-tools:
 # SEO — Universal SEO Analysis Skill
 
 Comprehensive SEO analysis across all industries (SaaS, local services,
-e-commerce, publishers, agencies). Orchestrates 12 specialized sub-skills
-and 6 subagents.
+e-commerce, publishers, agencies). Orchestrates 17 specialized sub-skills
+and 12 subagents.
 
 ## Quick Reference
 
@@ -42,12 +42,17 @@ and 6 subagents.
 | `/seo programmatic [url\|plan]` | Programmatic SEO analysis and planning |
 | `/seo competitor-pages [url\|generate]` | Competitor comparison page generation |
 | `/seo hreflang [url]` | Hreflang/i18n SEO audit and generation |
+| `/seo gsc <url>` | Google Search Console analysis |
+| `/seo backlinks <url>` | Backlink profile analysis |
+| `/seo competitor <url>` | Competitor gap analysis |
+| `/seo keywords <url>` | Keyword research & opportunity mapping |
+| `/seo fixes <url>` | Generate implementation-ready fixes |
 
 ## Orchestration Logic
 
 When the user invokes `/seo audit`, delegate to subagents in parallel:
 1. Detect business type (SaaS, local, ecommerce, publisher, agency, other)
-2. Spawn subagents: seo-technical, seo-content, seo-schema, seo-sitemap, seo-performance, seo-visual
+2. Spawn subagents: seo-technical, seo-content, seo-schema, seo-sitemap, seo-performance, seo-visual, seo-gsc, seo-backlinks, seo-competitor, seo-keywords, seo-geo, seo-fixes
 3. Collect results and generate unified report with SEO Health Score (0-100)
 4. Create prioritized action plan (Critical → High → Medium → Low)
 
@@ -103,7 +108,7 @@ Weighted aggregate of all categories:
 
 ## Sub-Skills
 
-This skill orchestrates 12 specialized sub-skills:
+This skill orchestrates 17 specialized sub-skills:
 
 1. **seo-audit** — Full website audit with parallel delegation
 2. **seo-page** — Deep single-page analysis
@@ -117,6 +122,11 @@ This skill orchestrates 12 specialized sub-skills:
 10. **seo-programmatic** — Programmatic SEO analysis and planning
 11. **seo-competitor-pages** — Competitor comparison page generation
 12. **seo-hreflang** — Hreflang/i18n SEO audit and generation
+13. **seo-gsc** — Google Search Console analysis
+14. **seo-backlinks** — Backlink profile analysis
+15. **seo-competitor** — Competitor gap analysis
+16. **seo-keywords** — Keyword research and opportunity mapping
+17. **seo-fixes** — Implementation-ready fix generation
 
 ## Subagents
 
@@ -127,3 +137,9 @@ For parallel analysis during audits:
 - `seo-sitemap` — Structure, coverage, quality gates
 - `seo-performance` — Core Web Vitals measurement
 - `seo-visual` — Screenshots, mobile testing, above-fold
+- `seo-gsc` — Search Console data, CTR optimization, index coverage
+- `seo-backlinks` — Backlink profile, referring domains, anchor text
+- `seo-competitor` — Competitor gap analysis, keyword overlap
+- `seo-keywords` — Keyword research, opportunity mapping
+- `seo-geo` — AI Overviews, GEO optimization, AI citations
+- `seo-fixes` — Implementation-ready fixes with code snippets
