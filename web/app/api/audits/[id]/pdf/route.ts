@@ -6,7 +6,7 @@ import { generatePdf } from '@/lib/pdf/renderer';
 import { loadScreenshots } from '@/lib/pdf/screenshots';
 import { CATEGORY_CONFIG } from '@/types';
 import type { Language, CategoryType } from '@/types';
-import type { PdfType, PdfAuditData, PdfCategoryData, PdfIssueData } from '@/lib/pdf/types';
+import type { PdfType, PdfTheme, PdfAuditData, PdfCategoryData, PdfIssueData } from '@/lib/pdf/types';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -24,6 +24,9 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const type = (searchParams.get('type') ?? 'executive') as PdfType;
     const langParam = searchParams.get('lang') as Language | null;
+
+    const themeParam = searchParams.get('theme');
+    const theme: PdfTheme = themeParam === 'light' || themeParam === 'dark' ? themeParam : 'dark';
 
     if (type !== 'executive' && type !== 'full') {
       return NextResponse.json(
@@ -115,7 +118,7 @@ export async function GET(
     };
 
     // Generate PDF
-    const pdfBuffer = await generatePdf(pdfData, type, lang);
+    const pdfBuffer = await generatePdf(pdfData, type, lang, theme);
 
     // Build filename
     const dateStr = new Date(audit.completedAt ?? Date.now())

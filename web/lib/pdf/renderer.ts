@@ -1,6 +1,6 @@
 import type { Browser } from 'playwright';
 import type { Language } from '@/types';
-import type { PdfType, PdfAuditData } from './types';
+import type { PdfType, PdfAuditData, PdfTheme } from './types';
 import { buildExecutiveHtml } from './template-executive';
 import { buildFullReportHtml } from './template-full';
 
@@ -24,16 +24,19 @@ async function getBrowser(): Promise<Browser> {
 
 /**
  * Generate a PDF buffer from audit data.
+ * Each page is a self-contained slide — margins and headers/footers
+ * are rendered inside the HTML, not by Playwright.
  */
 export async function generatePdf(
   data: PdfAuditData,
   type: PdfType,
   lang: Language,
+  theme: PdfTheme = 'dark',
 ): Promise<Buffer> {
   const html =
     type === 'executive'
-      ? buildExecutiveHtml(data, lang)
-      : buildFullReportHtml(data, lang);
+      ? buildExecutiveHtml(data, lang, theme)
+      : buildFullReportHtml(data, lang, theme);
 
   const browser = await getBrowser();
   const context = await browser.newContext();
@@ -44,25 +47,8 @@ export async function generatePdf(
   const pdfBuffer = await page.pdf({
     format: 'A4',
     printBackground: true,
-    displayHeaderFooter: true,
-    headerTemplate: `
-      <div style="width: 100%; font-size: 8px; color: #6868a0; padding: 0 15mm; display: flex; justify-content: space-between;">
-        <span style="font-weight: 700; letter-spacing: 2px; color: #e05a33;">SEONA</span>
-        <span>${data.projectUrl}</span>
-      </div>
-    `,
-    footerTemplate: `
-      <div style="width: 100%; font-size: 8px; color: #6868a0; padding: 0 15mm; display: flex; justify-content: space-between;">
-        <span>${lang === 'de' ? 'Vertraulich' : 'Confidential'}</span>
-        <span><span class="pageNumber"></span> / <span class="totalPages"></span></span>
-      </div>
-    `,
-    margin: {
-      top: '20mm',
-      bottom: '25mm',
-      left: '15mm',
-      right: '15mm',
-    },
+    displayHeaderFooter: false,
+    margin: { top: '0', bottom: '0', left: '0', right: '0' },
   });
 
   await context.close();

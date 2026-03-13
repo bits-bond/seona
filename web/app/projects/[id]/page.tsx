@@ -10,6 +10,9 @@ import {
   ScoreTrendChart,
   CategoryCards,
 } from '@/components/dashboard';
+import { ChartRadar } from '@/components/ui';
+import { CATEGORY_CONFIG } from '@/types';
+import type { CategoryType } from '@/types';
 import { FolderOpen, RefreshCw } from 'lucide-react';
 import type { Project, Audit, AuditCategory } from '@/types';
 
@@ -38,6 +41,18 @@ export default function ProjectDetailPage() {
   );
 
   const latestCategories: AuditCategory[] = latestAuditDetail?.categories ?? [];
+
+  const categoryTypes = Object.keys(CATEGORY_CONFIG) as CategoryType[];
+  const radarData = latestCategories.length > 0
+    ? categoryTypes.map((cat) => {
+        const catData = latestCategories.find((c) => c.category === cat);
+        return {
+          category: CATEGORY_CONFIG[cat].label,
+          score: catData?.score ?? 0,
+          fullMark: 100,
+        };
+      })
+    : [];
 
   return (
     <AppShell
@@ -83,7 +98,21 @@ export default function ProjectDetailPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <ScoreTrendChart audits={project.audits ?? []} />
+              {radarData.length > 0 ? (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Category Radar</h3>
+                  <ChartRadar
+                    data={radarData}
+                    angleKey="category"
+                    valueKeys={["score"]}
+                    height={300}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-sm text-default-400">
+                  No category data available yet.
+                </div>
+              )}
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">Latest Category Scores</h3>
@@ -96,6 +125,8 @@ export default function ProjectDetailPage() {
               )}
             </div>
           </div>
+
+          <ScoreTrendChart audits={project.audits ?? []} />
 
           <AuditHistoryTable
             audits={project.audits ?? []}

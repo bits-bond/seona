@@ -68,7 +68,7 @@ export function AppShell({
       {/* Content area: on mobile (< md) no left margin; on desktop, offset by sidebar */}
       <div
         className={cn(
-          "transition-[margin-left] duration-200 ease-in-out",
+          "relative z-0 transition-[margin-left] duration-200 ease-in-out",
           "max-md:!ml-0"
         )}
         style={{ marginLeft: `${sidebarOffset}px` }}

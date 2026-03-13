@@ -106,6 +106,59 @@ Delay between requests: 1 second
 - **Medium**: Optimization opportunity (fix within 1 month)
 - **Low**: Nice to have (backlog)
 
-## DataForSEO Integration (Optional)
+## Output Format Specification (MANDATORY)
 
-If DataForSEO MCP tools are available, spawn the `seo-dataforseo` agent alongside existing subagents to enrich the audit with live data: real SERP positions, backlink profiles with spam scores, on-page analysis (Lighthouse), business listings, and AI visibility checks (ChatGPT scraper, LLM mentions).
+The following format rules MUST be followed exactly. These are machine-parsed tokens — deviating breaks downstream processing. These tokens are ALWAYS in English, even when the report content is in German or another language.
+
+### FULL-AUDIT-REPORT.md Format
+
+The overall score line MUST appear exactly as:
+
+```
+### Overall SEO Health Score: N/100
+```
+
+where N is an integer 0-100. No spaces around the slash. No bold formatting.
+
+The category breakdown table MUST use exactly these column headers and category names:
+
+```
+| Category | Weight | Score | Weighted |
+|----------|--------|-------|----------|
+| Technical SEO | 25% | N/100 | N.NN |
+| Content Quality | 25% | N/100 | N.NN |
+| On-Page SEO | 20% | N/100 | N.NN |
+| Schema / Structured Data | 10% | N/100 | N.NN |
+| Performance (CWV) | 10% | N/100 | N.NN |
+| Images | 5% | N/100 | N.NN |
+| AI Search Readiness | 5% | N/100 | N.NN |
+| **Overall** | **100%** | | **N/100** |
+```
+
+Rules:
+- Category names are ALWAYS in English, even when report body is in another language
+- Weighted scores use dot decimal (7.50 not 7,50)
+- Score column uses N/100 format (no spaces around slash)
+- No extra columns (no Status column)
+
+### ACTION-PLAN.md Format
+
+Severity section headers MUST be exactly:
+
+```
+## CRITICAL
+## HIGH
+## MEDIUM
+## LOW
+```
+
+No suffixes, no "Phase N:" prefixes, no translated labels. Section content can be in any language.
+
+Issue titles MUST use sequential numbering:
+
+```
+### 1. Title here
+### 2. Another issue
+```
+
+Do NOT use letter prefixes (C1, H2, K1) or hierarchical numbering (1.1, 1.2).

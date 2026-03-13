@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { audits, auditCategories, auditIssues } from '@/lib/db/schema';
+import { audits, auditCategories, auditIssues, auditSubReports } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,10 +35,16 @@ export async function GET(
       .where(eq(auditIssues.auditId, id))
       .orderBy(auditIssues.orderIndex);
 
+    const subReports = await db
+      .select()
+      .from(auditSubReports)
+      .where(eq(auditSubReports.auditId, id));
+
     return NextResponse.json({
       ...audit,
       categories,
       issues,
+      subReports,
     });
   } catch (error) {
     console.error('Failed to fetch audit:', error);

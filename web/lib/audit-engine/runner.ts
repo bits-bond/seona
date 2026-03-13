@@ -2,13 +2,15 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { execSync } from 'node:child_process';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { parseFullReport, parseActionPlan } from './parser';
+import { parseFullReport, parseActionPlan, validateParsedReport } from './parser';
+import { readSubReportFiles } from './sub-report-files';
 import type { AuditProgress } from './types';
 
 /** Persist maps across HMR reloads in Next.js dev mode via globalThis */
 const globalForRunner = globalThis as typeof globalThis & {
   __auditActiveProcesses?: Map<string, ChildProcess>;
   __auditProgressMap?: Map<string, AuditProgress>;
+  __auditRunnerVersion?: number;
 };
 
 /** Map of active audit processes keyed by auditId */
@@ -16,6 +18,20 @@ const activeProcesses = globalForRunner.__auditActiveProcesses ??= new Map<strin
 
 /** Map of progress data keyed by auditId for SSE polling */
 const auditProgressMap = globalForRunner.__auditProgressMap ??= new Map<string, AuditProgress>();
+
+/**
+ * On HMR reload, clear stale process entries. When this module recompiles,
+ * event listeners (close, error, data) on old ChildProcess refs are lost,
+ * making those entries unmanageable zombies. Clear them so new runs can start.
+ */
+const MODULE_VERSION = Date.now();
+if (globalForRunner.__auditRunnerVersion && globalForRunner.__auditRunnerVersion !== MODULE_VERSION) {
+  if (activeProcesses.size > 0) {
+    console.error(`[audit-runner] HMR detected, clearing ${activeProcesses.size} stale process entries`);
+    activeProcesses.clear();
+  }
+}
+globalForRunner.__auditRunnerVersion = MODULE_VERSION;
 
 /** Project root is one level up from the web/ directory */
 const PROJECT_ROOT = path.resolve(process.cwd(), '..');
@@ -54,9 +70,33 @@ export function getAuditProgress(auditId: string): AuditProgress | null {
 
 /**
  * Check if an audit process is currently running.
+ * Cleans up stale entries where the process has exited but wasn't removed
+ * (can happen when HMR recompiles this module and event listeners are lost).
  */
 export function isAuditRunning(auditId: string): boolean {
-  return activeProcesses.has(auditId);
+  const proc = activeProcesses.get(auditId);
+  if (!proc) return false;
+
+  // Process exited but close handler was lost (HMR scenario)
+  if (proc.exitCode !== null || proc.killed) {
+    console.error(`[audit-runner] Cleaning up stale process for ${auditId} (exitCode: ${proc.exitCode})`);
+    activeProcesses.delete(auditId);
+    return false;
+  }
+
+  // Verify the OS process is actually alive (handles edge cases where
+  // exitCode hasn't been set yet but the process is gone)
+  if (proc.pid) {
+    try {
+      process.kill(proc.pid, 0); // signal 0 = just check if alive
+    } catch {
+      console.error(`[audit-runner] Process ${proc.pid} for ${auditId} is dead, cleaning up`);
+      activeProcesses.delete(auditId);
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
@@ -144,14 +184,39 @@ export async function startAudit(
     return;
   }
 
-  if (activeProcesses.has(auditId)) {
+  if (isAuditRunning(auditId)) {
     return;
   }
 
   const domain = extractDomain(url);
-  let prompt = `Run /seo-audit ${url}. Save all output files to output/${domain}/`;
+  let prompt = `Run /seo-audit ${url}. Save all output files to output/${domain}/
+
+CRITICAL FORMAT REQUIREMENTS for FULL-AUDIT-REPORT.md:
+1. The overall score MUST appear as exactly: ### Overall SEO Health Score: N/100
+2. The category table MUST use these EXACT column headers and category names:
+   | Category | Weight | Score | Weighted |
+   | Technical SEO | 25% | N/100 | N.NN |
+   | Content Quality | 25% | N/100 | N.NN |
+   | On-Page SEO | 20% | N/100 | N.NN |
+   | Schema / Structured Data | 10% | N/100 | N.NN |
+   | Performance (CWV) | 10% | N/100 | N.NN |
+   | Images | 5% | N/100 | N.NN |
+   | AI Search Readiness | 5% | N/100 | N.NN |
+3. Weighted scores use dot decimals (7.5 not 7,5). Score format is N/100 (no spaces).
+
+CRITICAL FORMAT REQUIREMENTS for ACTION-PLAN.md:
+1. Severity section headers MUST be: ## CRITICAL, ## HIGH, ## MEDIUM, ## LOW
+2. Issue titles MUST use: ### N. Title (sequential numbering, no letter prefixes)`;
+
   if (language === 'de') {
-    prompt += ` Write the entire audit report and action plan in German (Deutsch). All findings, descriptions, recommendations must be in German. Keep technical terms (robots.txt, JSON-LD, CWV) in their original form.`;
+    prompt += `
+
+Write the entire audit report and action plan in German (Deutsch). All findings, descriptions, recommendations must be in German. Keep technical terms (robots.txt, JSON-LD, CWV) in their original form.
+IMPORTANT: Even though content is in German, these structural tokens MUST stay in English exactly as specified above:
+- Score label: "### Overall SEO Health Score: N/100"
+- Category names: Technical SEO, Content Quality, On-Page SEO, Schema / Structured Data, Performance (CWV), Images, AI Search Readiness
+- Severity headers: ## CRITICAL, ## HIGH, ## MEDIUM, ## LOW
+- Use dot decimals (7.5 not 7,5)`;
   }
 
   // Update status to running
@@ -217,11 +282,13 @@ export async function startAudit(
   });
 
   child.stderr?.on('data', (data: Buffer) => {
-    stderrBuffer += data.toString();
+    const text = data.toString();
+    stderrBuffer += text;
+    console.error(`[audit-runner] stderr (${auditId}): ${text.trim().substring(0, 500)}`);
   });
 
   child.on('close', async (code) => {
-    console.error(`[audit-runner] Process closed for ${auditId} with code ${code}`);
+    console.error(`[audit-runner] Process closed for ${auditId} with code ${code}, stderr length: ${stderrBuffer.length}, stderr: ${stderrBuffer.substring(0, 500)}`);
     activeProcesses.delete(auditId);
 
     if (code !== 0) {
@@ -258,11 +325,17 @@ export async function startAudit(
       if (existsSync(reportPath)) {
         const reportMd = readFileSync(reportPath, 'utf-8');
         parsedReport = parseFullReport(reportMd);
+        const validation = validateParsedReport(parsedReport);
+        if (!validation.valid) {
+          console.warn(`[audit-runner] Parse validation warnings for ${auditId}:`, validation.warnings);
+        }
+        console.error(`[audit-runner] Parsed report: score=${parsedReport.overallScore}, categories=${parsedReport.categories.length}, businessType=${parsedReport.businessType}`);
       }
 
       if (existsSync(actionPlanPath)) {
         const actionPlanMd = readFileSync(actionPlanPath, 'utf-8');
         parsedActionPlan = parseActionPlan(actionPlanMd);
+        console.error(`[audit-runner] Parsed action plan: ${parsedActionPlan.issues.length} issues`);
       }
 
       // Store audit fields via API
@@ -298,6 +371,17 @@ export async function startAudit(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ issues: parsedActionPlan.issues }),
+        });
+      }
+
+      // Save sub-audit detail files (technical-seo.md, schema-audit.md, etc.)
+      const subReports = readSubReportFiles(outputDir, language);
+      if (subReports.length > 0) {
+        console.error(`[audit-runner] Saving ${subReports.length} sub-reports for ${auditId}`);
+        await fetch(`${baseApiUrl}/api/audits/${auditId}/sub-reports`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subReports }),
         });
       }
 

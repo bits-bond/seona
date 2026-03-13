@@ -15,3 +15,4 @@ export { CategoryCards } from './category-cards';
 export { CategoryBreakdown } from './category-breakdown';
 export { IssuesTable } from './issues-table';
 export { ReportViewer } from './report-viewer';
+export { SubReportTab } from './sub-report-tab';

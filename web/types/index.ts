@@ -57,6 +57,16 @@ export interface AuditIssue {
   orderIndex: number;
 }
 
+export interface AuditSubReport {
+  id: string;
+  auditId: string;
+  slug: string;
+  title: string;
+  content: string;
+  source: string;
+  createdAt: Date;
+}
+
 export const CATEGORY_CONFIG: Record<
   CategoryType,
   { label: string; weight: number; color: string; icon: string }

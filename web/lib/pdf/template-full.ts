@@ -1,12 +1,24 @@
 import type { Language, CategoryType } from '@/types';
-import type { PdfAuditData } from './types';
+import type { PdfAuditData, PdfTheme } from './types';
+import { getPalette } from './types';
 import { label } from './labels';
-import { PDF_STYLES } from './styles';
+import { getPdfStyles } from './styles';
 import {
   renderScoreGaugeSVG,
   renderRadarChartSVG,
   renderBarChartSVG,
 } from './svg-charts';
+import { renderMarkdown, renderInlineMarkdown } from './markdown';
+import {
+  wrapSlide,
+  TOTAL_PLACEHOLDER,
+  renderIssueCardV2,
+  renderCategoryCardV2,
+  severityBadge,
+  getScoreLabel,
+  chunk,
+  paginateHtmlBlocks,
+} from './slide-utils';
 
 const CATEGORY_LABELS: Record<string, string> = {
   technical: 'technicalSeo',
@@ -28,18 +40,6 @@ const CATEGORY_ORDER: CategoryType[] = [
   'ai_readiness',
 ];
 
-function severityBadge(severity: string, lang: Language): string {
-  return `<span class="badge badge-${severity}">${label(lang, severity)}</span>`;
-}
-
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -48,34 +48,39 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function formatDate(date: Date, lang: Language): string {
+  return new Date(date).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
 /**
- * Build full technical report HTML (15-25 pages):
- * Cover, TOC, Executive Summary, 7 Category Sections,
- * Action Plan, Screenshots, Appendix
+ * Build full technical report HTML as a slide deck (15-30 slides).
  */
-export function buildFullReportHtml(data: PdfAuditData, lang: Language): string {
+export function buildFullReportHtml(data: PdfAuditData, lang: Language, theme: PdfTheme): string {
   const l = (key: string) => label(lang, key);
+  const p = getPalette(theme);
+  const slides: string[] = [];
+  let slideNum = 0;
 
   const chartCategories = data.categories.map((c) => ({
     label: l(CATEGORY_LABELS[c.category] ?? c.category),
     score: c.score,
   }));
 
-  const scoreGaugeSvg = renderScoreGaugeSVG(data.overallScore, 200);
-  const radarSvg = renderRadarChartSVG(chartCategories, 320);
-  const barSvg = renderBarChartSVG(chartCategories, 480);
-
   // Group issues by category
   const issuesByCategory = new Map<CategoryType, typeof data.issues>();
   for (const issue of data.issues) {
-    const cat = issue.category ?? 'technical';
+    const cat = issue.category ?? ('technical' as CategoryType);
     if (!issuesByCategory.has(cat)) {
       issuesByCategory.set(cat, []);
     }
     issuesByCategory.get(cat)!.push(issue);
   }
 
-  // Group issues by severity for action plan
+  // Group issues by severity
   const issuesBySeverity = {
     critical: data.issues.filter((i) => i.severity === 'critical'),
     high: data.issues.filter((i) => i.severity === 'high'),
@@ -83,326 +88,372 @@ export function buildFullReportHtml(data: PdfAuditData, lang: Language): string 
     low: data.issues.filter((i) => i.severity === 'low'),
   };
 
-  return `<!DOCTYPE html>
-<html lang="${lang}">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${l('fullReport')} — ${data.projectUrl}</title>
-  <style>${PDF_STYLES}</style>
-</head>
-<body>
+  const sevCounts = {
+    critical: issuesBySeverity.critical.length,
+    high: issuesBySeverity.high.length,
+    medium: issuesBySeverity.medium.length,
+    low: issuesBySeverity.low.length,
+  };
 
-  <!-- Cover Page -->
-  <div class="cover-page">
-    <div class="cover-logo">SEONA</div>
-    <div class="cover-subtitle">${l('fullReport')}</div>
-    <div class="cover-domain">${data.projectUrl}</div>
-    ${data.businessType ? `<div class="cover-date">${data.businessType}</div>` : ''}
-    <div class="cover-date">${formatDate(data.completedAt)}</div>
-    <div class="cover-score">
-      ${scoreGaugeSvg}
-    </div>
-  </div>
+  // ══════════════════════════════════════════════════════════════════════
+  // Slide 1: Cover
+  // ══════════════════════════════════════════════════════════════════════
+  slides.push(wrapSlide({
+    layout: 'cover',
+    body: `
+      <div class="cover-logo">SEONA</div>
+      <div class="cover-subtitle">${l('fullReport')}</div>
+      <div class="cover-domain">${escapeHtml(data.projectUrl)}</div>
+      ${data.businessType ? `<div class="cover-date">${escapeHtml(data.businessType)}</div>` : ''}
+      <div class="cover-date">${formatDate(data.completedAt, lang)}</div>
+      <div class="cover-score">${renderScoreGaugeSVG(data.overallScore, 220, p)}</div>
+    `,
+    slideNum: 0,
+    url: data.projectUrl,
+    lang,
+    p,
+  }));
 
-  <!-- Table of Contents -->
-  <div class="section toc">
-    <h1>${l('tableOfContents')}</h1>
-    <div class="toc-item"><span class="toc-label">1. ${l('executiveSummary')}</span></div>
-    <div class="toc-item"><span class="toc-label">2. ${l('categoryScores')}</span></div>
-    ${CATEGORY_ORDER.map(
+  // ══════════════════════════════════════════════════════════════════════
+  // Slide 2: Table of Contents
+  // ══════════════════════════════════════════════════════════════════════
+  slideNum++;
+  const tocItems = [
+    `<div class="toc-item"><span class="toc-label">1. ${l('executiveSummary')}</span></div>`,
+    `<div class="toc-item"><span class="toc-label">2. ${l('categoryScores')}</span></div>`,
+    ...CATEGORY_ORDER.map(
       (cat, i) =>
-        `<div class="toc-item" style="padding-left: 20px;"><span class="toc-label">2.${i + 1} ${l(CATEGORY_LABELS[cat])}</span></div>`,
-    ).join('')}
-    <div class="toc-item"><span class="toc-label">3. ${l('actionPlan')}</span></div>
-    ${data.screenshots.length > 0 ? `<div class="toc-item"><span class="toc-label">4. ${l('screenshots')}</span></div>` : ''}
-    <div class="toc-item"><span class="toc-label">${data.screenshots.length > 0 ? '5' : '4'}. ${l('appendix')}</span></div>
-  </div>
+        `<div class="toc-item toc-indent"><span class="toc-label">2.${i + 1} ${l(CATEGORY_LABELS[cat])}</span></div>`,
+    ),
+    `<div class="toc-item"><span class="toc-label">3. ${l('actionPlan')}</span></div>`,
+    ...(data.screenshots.length > 0
+      ? [`<div class="toc-item"><span class="toc-label">4. ${l('screenshots')}</span></div>`]
+      : []),
+    `<div class="toc-item"><span class="toc-label">${data.screenshots.length > 0 ? '5' : '4'}. ${l('appendix')}</span></div>`,
+  ];
+  slides.push(wrapSlide({
+    sectionTitle: l('tableOfContents'),
+    body: tocItems.join(''),
+    slideNum,
+    url: data.projectUrl,
+    lang,
+    p,
+  }));
 
-  <!-- Section 1: Executive Summary -->
-  <div class="section">
-    <h1>1. ${l('executiveSummary')}</h1>
-
-    <div class="charts-row">
-      <div class="chart-container">
-        ${scoreGaugeSvg}
+  // ══════════════════════════════════════════════════════════════════════
+  // Slide 3: Executive Summary (two-col)
+  // ══════════════════════════════════════════════════════════════════════
+  slideNum++;
+  const scoreRating = getScoreLabel(data.overallScore, lang);
+  const radarSvg = renderRadarChartSVG(chartCategories, 250, p);
+  slides.push(wrapSlide({
+    layout: 'two-col',
+    sectionTitle: `1. ${l('executiveSummary')}`,
+    body: `
+      <div class="flex-col-center">
+        ${renderScoreGaugeSVG(data.overallScore, 180, p)}
+        <div class="score-label" style="font-size: 12pt; font-weight: 600; margin-top: 6px;">${scoreRating}</div>
+        <div style="margin-top: 16px;">
+          ${radarSvg}
+        </div>
       </div>
-      <div class="chart-container">
-        ${radarSvg}
+      <div>
+        <div class="metric-row">
+          <span class="metric-label">${l('businessType')}</span>
+          <span class="metric-value">${escapeHtml(data.businessType ?? '—')}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">${l('pagesCrawled')}</span>
+          <span class="metric-value">${data.pagesCrawled ?? '—'}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">${l('completedOn')}</span>
+          <span class="metric-value">${formatDate(data.completedAt, lang)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">${l('totalIssues')}</span>
+          <span class="metric-value">${data.issues.length}</span>
+        </div>
+        <div class="severity-dots" style="margin-top: 12px;">
+          <span class="severity-dot"><span class="dot" style="background: #c1121f;"></span> ${sevCounts.critical} ${l('critical')}</span>
+          <span class="severity-dot"><span class="dot" style="background: #cc7722;"></span> ${sevCounts.high} ${l('high')}</span>
+        </div>
+        <div class="severity-dots">
+          <span class="severity-dot"><span class="dot" style="background: #d4a843;"></span> ${sevCounts.medium} ${l('medium')}</span>
+          <span class="severity-dot"><span class="dot" style="background: #2a9d5a;"></span> ${sevCounts.low} ${l('low')}</span>
+        </div>
+
+        <h2 style="margin-top: 20px; font-size: 11pt;">${l('categoryScores')}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>${l('category')}</th>
+              <th>${l('score')}</th>
+              <th>${l('weight')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.categories
+              .map(
+                (c) => `<tr>
+                <td>${l(CATEGORY_LABELS[c.category] ?? c.category)}</td>
+                <td><strong>${c.score}</strong>/100</td>
+                <td>${c.weight}%</td>
+              </tr>`,
+              )
+              .join('')}
+          </tbody>
+        </table>
       </div>
-    </div>
+    `,
+    slideNum,
+    url: data.projectUrl,
+    lang,
+    p,
+  }));
 
-    <div style="margin: 8px 0 16px;">
-      <p><strong>${l('businessType')}:</strong> ${data.businessType ?? '—'}</p>
-      <p><strong>${l('pagesCrawled')}:</strong> ${data.pagesCrawled ?? '—'}</p>
-      <p><strong>${l('completedOn')}:</strong> ${formatDate(data.completedAt)}</p>
-    </div>
+  // ══════════════════════════════════════════════════════════════════════
+  // Slide 4: Category Overview (grid + bar chart)
+  // ══════════════════════════════════════════════════════════════════════
+  slideNum++;
+  const catCards = data.categories.map((c, i) => renderCategoryCardV2(c, i, lang, p)).join('');
+  const barSvg = renderBarChartSVG(chartCategories, 480, p);
+  slides.push(wrapSlide({
+    sectionTitle: l('categoryOverview'),
+    body: `
+      <div class="cat-grid">${catCards}</div>
+      <div class="chart-container" style="margin-top: 8px;">
+        ${barSvg}
+      </div>
+    `,
+    slideNum,
+    url: data.projectUrl,
+    lang,
+    p,
+  }));
 
-    <h2>${l('categoryScores')}</h2>
-    <div class="chart-container">
-      ${barSvg}
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>${l('category')}</th>
-          <th>${l('score')}</th>
-          <th>${l('weight')}</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${data.categories
-          .map(
-            (c) => `
-          <tr>
-            <td>${l(CATEGORY_LABELS[c.category] ?? c.category)}</td>
-            <td><strong>${c.score}</strong>/100</td>
-            <td>${c.weight}%</td>
-          </tr>`,
-          )
-          .join('')}
-      </tbody>
-    </table>
-
-    ${
-      issuesBySeverity.critical.length > 0
-        ? `
-    <h2>${l('topIssues')}</h2>
-    ${issuesBySeverity.critical
-      .slice(0, 5)
-      .map(
-        (issue) => `
-      <div class="issue-card">
-        <h3>${severityBadge(issue.severity, lang)} ${escapeHtml(issue.title)}</h3>
-        <p>${escapeHtml(issue.description)}</p>
-        ${issue.impact ? `<p class="impact"><strong>${l('impact')}:</strong> ${escapeHtml(issue.impact)}</p>` : ''}
-      </div>`,
-      )
-      .join('')}`
-        : ''
+  // ══════════════════════════════════════════════════════════════════════
+  // Slides 5-6: Top Issues Summary (critical + high)
+  // ══════════════════════════════════════════════════════════════════════
+  const topIssues = [...issuesBySeverity.critical, ...issuesBySeverity.high].slice(0, 8);
+  if (topIssues.length > 0) {
+    const issueChunks = chunk(topIssues, 3);
+    for (const [chunkIdx, issueChunk] of issueChunks.entries()) {
+      slideNum++;
+      const suffix = issueChunks.length > 1 ? ` (${chunkIdx + 1}/${issueChunks.length})` : '';
+      const cards = issueChunk
+        .map((issue, i) => renderIssueCardV2(issue, chunkIdx * 3 + i, topIssues.length, lang, p))
+        .join('');
+      slides.push(wrapSlide({
+        sectionTitle: `${l('topIssues')}${suffix}`,
+        body: cards,
+        slideNum,
+        url: data.projectUrl,
+        lang,
+        p,
+      }));
     }
-  </div>
+  }
 
-  <!-- Section 2: Category Deep Dives -->
-  ${CATEGORY_ORDER.map((cat, catIdx) => {
+  // ══════════════════════════════════════════════════════════════════════
+  // Slides 7-20: Per-Category Deep Dives
+  // ══════════════════════════════════════════════════════════════════════
+  for (const [catIdx, cat] of CATEGORY_ORDER.entries()) {
     const catData = data.categories.find((c) => c.category === cat);
     const catIssues = issuesByCategory.get(cat) ?? [];
     const catLabel = l(CATEGORY_LABELS[cat]);
     const catScore = catData?.score ?? 0;
 
-    return `
-  <div class="section">
-    <h1>2.${catIdx + 1} ${catLabel}</h1>
+    // Category header slide
+    slideNum++;
+    const issueCountText = catIssues.length > 0
+      ? `${catIssues.length} ${l('issuesFound')}`
+      : l('noIssues');
+    const sevBreakdown = catIssues.length > 0
+      ? (() => {
+          const counts = {
+            critical: catIssues.filter((i) => i.severity === 'critical').length,
+            high: catIssues.filter((i) => i.severity === 'high').length,
+            medium: catIssues.filter((i) => i.severity === 'medium').length,
+            low: catIssues.filter((i) => i.severity === 'low').length,
+          };
+          return `<div class="severity-dots" style="margin-top: 8px;">
+            ${counts.critical > 0 ? `<span class="severity-dot"><span class="dot" style="background: #c1121f;"></span> ${counts.critical} ${l('critical')}</span>` : ''}
+            ${counts.high > 0 ? `<span class="severity-dot"><span class="dot" style="background: #cc7722;"></span> ${counts.high} ${l('high')}</span>` : ''}
+            ${counts.medium > 0 ? `<span class="severity-dot"><span class="dot" style="background: #d4a843;"></span> ${counts.medium} ${l('medium')}</span>` : ''}
+            ${counts.low > 0 ? `<span class="severity-dot"><span class="dot" style="background: #2a9d5a;"></span> ${counts.low} ${l('low')}</span>` : ''}
+          </div>`;
+        })()
+      : '';
 
-    <div class="category-grid" style="grid-template-columns: 1fr;">
-      <div class="category-card" style="display: flex; align-items: center; gap: 24px;">
-        ${renderScoreGaugeSVG(catScore, 100)}
-        <div>
-          <div class="cat-score" style="font-size: 24pt; color: #e8e8ed;">${catScore}<span style="font-size: 14pt; color: #8888a0;">/100</span></div>
-          <div class="cat-weight">${l('weight')}: ${catData?.weight ?? 0}%</div>
+    slides.push(wrapSlide({
+      layout: 'two-col-60-40',
+      sectionTitle: `2.${catIdx + 1} ${catLabel}`,
+      body: `
+        <div class="flex-col-center">
+          ${renderScoreGaugeSVG(catScore, 180, p)}
+          <div class="score-label" style="font-size: 12pt; font-weight: 600; margin-top: 6px;">${getScoreLabel(catScore, lang)}</div>
         </div>
-      </div>
-    </div>
+        <div style="display: flex; flex-direction: column; justify-content: center;">
+          <h2 style="margin-top: 0; font-size: 13pt;">${catLabel}</h2>
+          <div class="metric-row">
+            <span class="metric-label">${l('score')}</span>
+            <span class="metric-value">${catScore}/100</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">${l('weight')}</span>
+            <span class="metric-value">${catData?.weight ?? 0}%</span>
+          </div>
+          <div style="margin-top: 12px; font-size: 10pt; color: ${p.textSecondary};">
+            ${issueCountText}
+          </div>
+          ${sevBreakdown}
+        </div>
+      `,
+      slideNum,
+      url: data.projectUrl,
+      lang,
+      p,
+    }));
 
-    ${
-      catIssues.length > 0
-        ? `
-    <h2>${l('issue')}${lang === 'en' ? 's' : ''} (${catIssues.length})</h2>
-    ${catIssues
-      .map(
-        (issue) => `
-      <div class="issue-card">
-        <h3>${severityBadge(issue.severity, lang)} ${escapeHtml(issue.title)}</h3>
-        <p>${escapeHtml(issue.description)}</p>
-        ${issue.impact ? `<p class="impact"><strong>${l('impact')}:</strong> ${escapeHtml(issue.impact)}</p>` : ''}
-        ${issue.recommendation ? `<div class="recommendation"><strong>${l('recommendation')}:</strong> ${escapeHtml(issue.recommendation)}</div>` : ''}
-      </div>`,
-      )
-      .join('')}`
-        : `<p style="color: #8888a0;">${lang === 'de' ? 'Keine Probleme in dieser Kategorie gefunden.' : 'No issues found in this category.'}</p>`
+    // Category issue slides (2 per slide)
+    if (catIssues.length > 0) {
+      const catChunks = chunk(catIssues, 2);
+      for (const [ci, issueChunk] of catChunks.entries()) {
+        slideNum++;
+        const suffix = catChunks.length > 1 ? ` (${ci + 1}/${catChunks.length})` : '';
+        const issueSuffix = catChunks.length > 1 ? ` — ${l('issue')}${lang === 'en' ? 's' : ''}${suffix}` : ` — ${l('issue')}${lang === 'en' ? 's' : ''}`;
+        const cards = issueChunk
+          .map((issue, i) => renderIssueCardV2(issue, ci * 2 + i, catIssues.length, lang, p))
+          .join('');
+        slides.push(wrapSlide({
+          sectionTitle: `2.${catIdx + 1} ${catLabel}${issueSuffix}`,
+          body: cards,
+          slideNum,
+          url: data.projectUrl,
+          lang,
+          p,
+        }));
+      }
     }
-  </div>`;
-  }).join('')}
+  }
 
-  <!-- Section 3: Action Plan -->
-  <div class="section">
-    <h1>3. ${l('actionPlan')}</h1>
+  // ══════════════════════════════════════════════════════════════════════
+  // Action Plan slides
+  // ══════════════════════════════════════════════════════════════════════
+  const severities = (['critical', 'high', 'medium', 'low'] as const).filter(
+    (sev) => issuesBySeverity[sev].length > 0,
+  );
 
-    ${(['critical', 'high', 'medium', 'low'] as const)
-      .filter((sev) => issuesBySeverity[sev].length > 0)
-      .map(
-        (sev) => `
-    <h2>${severityBadge(sev, lang)} ${l(sev)} (${issuesBySeverity[sev].length})</h2>
-    <table>
-      <thead>
-        <tr>
-          <th style="width: 5%">#</th>
-          <th style="width: 35%">${l('issue')}</th>
-          <th style="width: 60%">${l('recommendation')}</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${issuesBySeverity[sev]
-          .map(
-            (issue, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${escapeHtml(issue.title)}</td>
-          <td>${issue.recommendation ? escapeHtml(issue.recommendation) : '—'}</td>
-        </tr>`,
-          )
-          .join('')}
-      </tbody>
-    </table>`,
-      )
-      .join('')}
-  </div>
-
-  <!-- Section 4: Screenshots -->
-  ${
-    data.screenshots.length > 0
-      ? `
-  <div class="section">
-    <h1>4. ${l('screenshots')}</h1>
-    <div class="screenshot-grid">
-      ${data.screenshots
+  for (const sev of severities) {
+    const sevIssues = issuesBySeverity[sev];
+    const tableChunks = chunk(sevIssues, 8);
+    for (const [ti, tableChunk] of tableChunks.entries()) {
+      slideNum++;
+      const suffix = tableChunks.length > 1 ? ` (${ti + 1}/${tableChunks.length})` : '';
+      const rows = tableChunk
         .map(
-          (ss) => `
-        <div class="screenshot-item">
-          <img src="${ss.dataUri}" alt="${ss.page} ${ss.device} ${ss.type}" />
-          <div class="caption">${ss.page} — ${ss.device} — ${ss.type}</div>
+          (issue, i) => `<tr>
+          <td>${ti * 8 + i + 1}</td>
+          <td>${renderInlineMarkdown(issue.title)}</td>
+          <td>${issue.recommendation ? renderInlineMarkdown(issue.recommendation) : '—'}</td>
+        </tr>`,
+        )
+        .join('');
+      slides.push(wrapSlide({
+        sectionTitle: `3. ${l('actionPlan')} — ${severityBadge(sev, lang)}${suffix}`,
+        body: `
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 5%">#</th>
+                <th style="width: 35%">${l('issue')}</th>
+                <th style="width: 60%">${l('recommendation')}</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `,
+        slideNum,
+        url: data.projectUrl,
+        lang,
+        p,
+      }));
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Screenshots slides (2 per slide)
+  // ══════════════════════════════════════════════════════════════════════
+  if (data.screenshots.length > 0) {
+    const ssChunks = chunk(data.screenshots, 2);
+    for (const [si, ssChunk] of ssChunks.entries()) {
+      slideNum++;
+      const suffix = ssChunks.length > 1 ? ` (${si + 1}/${ssChunks.length})` : '';
+      const ssHtml = ssChunk
+        .map(
+          (ss) => `<div class="screenshot-item">
+          <img src="${ss.dataUri}" alt="${escapeHtml(ss.page)} ${ss.device} ${ss.type}" />
+          <div class="caption">${escapeHtml(ss.page)} — ${ss.device} — ${ss.type}</div>
         </div>`,
         )
-        .join('')}
-    </div>
-  </div>`
-      : ''
+        .join('');
+      slides.push(wrapSlide({
+        sectionTitle: `${data.screenshots.length > 0 ? '4' : '—'}. ${l('screenshots')}${suffix}`,
+        body: `<div class="screenshot-grid">${ssHtml}</div>`,
+        slideNum,
+        url: data.projectUrl,
+        lang,
+        p,
+      }));
+    }
   }
 
-  <!-- Appendix -->
-  <div class="section">
-    <h1>${data.screenshots.length > 0 ? '5' : '4'}. ${l('appendix')}</h1>
+  // ══════════════════════════════════════════════════════════════════════
+  // Appendix slides (paginated markdown)
+  // ══════════════════════════════════════════════════════════════════════
+  const appendixNum = data.screenshots.length > 0 ? '5' : '4';
+  if (data.fullReportMd) {
+    const mdHtml = renderMarkdown(data.fullReportMd);
+    const pages = paginateHtmlBlocks(mdHtml);
+    for (const [pi, pageHtml] of pages.entries()) {
+      slideNum++;
+      const pageSuffix = pages.length > 1 ? ` (${pi + 1}/${pages.length})` : '';
+      slides.push(wrapSlide({
+        sectionTitle: `${appendixNum}. ${l('appendix')}${pageSuffix}`,
+        body: `<div class="markdown-content">${pageHtml}</div>`,
+        slideNum,
+        url: data.projectUrl,
+        lang,
+        p,
+      }));
+    }
+  } else {
+    slideNum++;
+    slides.push(wrapSlide({
+      sectionTitle: `${appendixNum}. ${l('appendix')}`,
+      body: `<p style="color: ${p.textMuted};">${lang === 'de' ? 'Kein vollständiger Bericht verfügbar.' : 'No full report available.'}</p>`,
+      slideNum,
+      url: data.projectUrl,
+      lang,
+      p,
+    }));
+  }
 
-    <h2>${l('fullReport')}</h2>
-    <div class="markdown-content">
-      ${data.fullReportMd ? simpleMarkdownToHtml(data.fullReportMd) : `<p style="color: #8888a0;">${lang === 'de' ? 'Kein vollständiger Bericht verfügbar.' : 'No full report available.'}</p>`}
-    </div>
-  </div>
-
+  // ── Assemble final HTML ──
+  const totalSlides = slideNum;
+  const html = `<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${l('fullReport')} — ${escapeHtml(data.projectUrl)}</title>
+  <style>${getPdfStyles(p)}</style>
+</head>
+<body>
+${slides.join('\n')}
 </body>
 </html>`;
-}
 
-/**
- * Simple markdown to HTML converter for embedding reports.
- * Handles headings, bold, lists, links, code blocks, and paragraphs.
- */
-function simpleMarkdownToHtml(md: string): string {
-  const lines = md.split('\n');
-  const html: string[] = [];
-  let inCodeBlock = false;
-  let inList = false;
-  let listType: 'ul' | 'ol' = 'ul';
-
-  for (const line of lines) {
-    // Code blocks
-    if (line.trim().startsWith('```')) {
-      if (inCodeBlock) {
-        html.push('</code></pre>');
-        inCodeBlock = false;
-      } else {
-        if (inList) {
-          html.push(`</${listType}>`);
-          inList = false;
-        }
-        html.push('<pre><code>');
-        inCodeBlock = true;
-      }
-      continue;
-    }
-
-    if (inCodeBlock) {
-      html.push(escapeHtml(line));
-      continue;
-    }
-
-    // Close list if line doesn't continue it
-    if (inList && !line.match(/^\s*[-*]\s/) && !line.match(/^\s*\d+\.\s/) && line.trim() !== '') {
-      html.push(`</${listType}>`);
-      inList = false;
-    }
-
-    // Headings
-    const headingMatch = line.match(/^(#{1,4})\s+(.+)/);
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      html.push(`<h${level}>${inlineFormat(headingMatch[2])}</h${level}>`);
-      continue;
-    }
-
-    // Unordered list
-    const ulMatch = line.match(/^\s*[-*]\s+(.+)/);
-    if (ulMatch) {
-      if (!inList) {
-        html.push('<ul>');
-        inList = true;
-        listType = 'ul';
-      }
-      html.push(`<li>${inlineFormat(ulMatch[1])}</li>`);
-      continue;
-    }
-
-    // Ordered list
-    const olMatch = line.match(/^\s*\d+\.\s+(.+)/);
-    if (olMatch) {
-      if (!inList) {
-        html.push('<ol>');
-        inList = true;
-        listType = 'ol';
-      }
-      html.push(`<li>${inlineFormat(olMatch[1])}</li>`);
-      continue;
-    }
-
-    // Horizontal rule
-    if (line.match(/^---+$/)) {
-      html.push('<hr>');
-      continue;
-    }
-
-    // Empty line
-    if (line.trim() === '') {
-      continue;
-    }
-
-    // Table row
-    if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
-      // Skip separator rows
-      if (line.match(/^\|[\s-:|]+\|$/)) continue;
-      const cells = line.split('|').filter((c) => c.trim() !== '');
-      const tag = html.length > 0 && html[html.length - 1]?.includes('<table>') ? 'td' : 'td';
-      html.push(`<tr>${cells.map((c) => `<${tag}>${inlineFormat(c.trim())}</${tag}>`).join('')}</tr>`);
-      if (!html.some((h) => h.includes('<table>'))) {
-        html.splice(html.length - 1, 0, '<table>');
-      }
-      continue;
-    }
-
-    // Regular paragraph
-    html.push(`<p>${inlineFormat(line)}</p>`);
-  }
-
-  if (inList) html.push(`</${listType}>`);
-  if (inCodeBlock) html.push('</code></pre>');
-
-  return html.join('\n');
-}
-
-function inlineFormat(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code>$1</code>')
-    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>');
+  return html.replaceAll(TOTAL_PLACEHOLDER, String(totalSlides));
 }

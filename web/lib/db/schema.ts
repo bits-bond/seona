@@ -47,6 +47,16 @@ export const auditIssues = pgTable('audit_issues', {
   orderIndex: integer('order_index').notNull().default(0),
 });
 
+export const auditSubReports = pgTable('audit_sub_reports', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  auditId: uuid('audit_id').notNull().references(() => audits.id, { onDelete: 'cascade' }),
+  slug: varchar('slug', { length: 50 }).notNull(),
+  title: varchar('title', { length: 200 }).notNull(),
+  content: text('content').notNull(),
+  source: varchar('source', { length: 20 }).notNull().default('file'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Relations
 export const projectsRelations = relations(projects, ({ many }) => ({
   audits: many(audits),
@@ -59,6 +69,7 @@ export const auditsRelations = relations(audits, ({ one, many }) => ({
   }),
   categories: many(auditCategories),
   issues: many(auditIssues),
+  subReports: many(auditSubReports),
 }));
 
 export const auditCategoriesRelations = relations(auditCategories, ({ one }) => ({
@@ -71,6 +82,13 @@ export const auditCategoriesRelations = relations(auditCategories, ({ one }) => 
 export const auditIssuesRelations = relations(auditIssues, ({ one }) => ({
   audit: one(audits, {
     fields: [auditIssues.auditId],
+    references: [audits.id],
+  }),
+}));
+
+export const auditSubReportsRelations = relations(auditSubReports, ({ one }) => ({
+  audit: one(audits, {
+    fields: [auditSubReports.auditId],
     references: [audits.id],
   }),
 }));

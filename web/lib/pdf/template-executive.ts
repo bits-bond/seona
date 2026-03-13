@@ -1,8 +1,18 @@
 import type { Language } from '@/types';
-import type { PdfAuditData } from './types';
+import type { PdfAuditData, PdfTheme } from './types';
+import { getPalette } from './types';
 import { label } from './labels';
-import { PDF_STYLES } from './styles';
-import { renderScoreGaugeSVG, renderRadarChartSVG } from './svg-charts';
+import { getPdfStyles } from './styles';
+import { renderScoreGaugeSVG, renderRadarChartSVG, renderBarChartSVG } from './svg-charts';
+import {
+  wrapSlide,
+  TOTAL_PLACEHOLDER,
+  renderIssueCardV2,
+  renderCategoryCardV2,
+  renderQuickWinCard,
+  getScoreLabel,
+  chunk,
+} from './slide-utils';
 
 const CATEGORY_LABELS: Record<string, string> = {
   technical: 'technicalSeo',
@@ -14,12 +24,16 @@ const CATEGORY_LABELS: Record<string, string> = {
   ai_readiness: 'aiReadiness',
 };
 
-function severityBadge(severity: string, lang: Language): string {
-  return `<span class="badge badge-${severity}">${label(lang, severity)}</span>`;
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
+function formatDate(date: Date, lang: Language): string {
+  return new Date(date).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -27,148 +41,219 @@ function formatDate(date: Date): string {
 }
 
 /**
- * Build executive summary HTML (2-5 pages):
- * Page 1: Cover
- * Page 2: Scores + Radar + Top Issues
- * Page 3: Quick Wins
- * Page 4: Next Steps + Contact
+ * Build executive summary HTML as a slide deck (5-8 slides).
  */
-export function buildExecutiveHtml(data: PdfAuditData, lang: Language): string {
+export function buildExecutiveHtml(data: PdfAuditData, lang: Language, theme: PdfTheme): string {
   const l = (key: string) => label(lang, key);
+  const p = getPalette(theme);
+  const slides: string[] = [];
+  let slideNum = 0;
 
-  // Prepare category data for charts
   const chartCategories = data.categories.map((c) => ({
     label: l(CATEGORY_LABELS[c.category] ?? c.category),
     score: c.score,
   }));
 
-  // Top issues: critical and high severity, max 8
-  const topIssues = data.issues
-    .filter((i) => i.severity === 'critical' || i.severity === 'high')
-    .slice(0, 8);
-
-  // Quick wins: medium/low severity with recommendations, max 5
+  // Issue groups
+  const criticalIssues = data.issues.filter((i) => i.severity === 'critical');
+  const highIssues = data.issues.filter((i) => i.severity === 'high');
+  const topIssues = [...criticalIssues, ...highIssues].slice(0, 10);
   const quickWins = data.issues
     .filter((i) => (i.severity === 'medium' || i.severity === 'low') && i.recommendation)
     .slice(0, 5);
 
-  const scoreGaugeSvg = renderScoreGaugeSVG(data.overallScore, 180);
-  const radarSvg = renderRadarChartSVG(chartCategories, 280);
+  // Severity counts for overview
+  const sevCounts = {
+    critical: data.issues.filter((i) => i.severity === 'critical').length,
+    high: data.issues.filter((i) => i.severity === 'high').length,
+    medium: data.issues.filter((i) => i.severity === 'medium').length,
+    low: data.issues.filter((i) => i.severity === 'low').length,
+  };
 
-  return `<!DOCTYPE html>
+  // ── Slide 1: Cover ──
+  slides.push(wrapSlide({
+    layout: 'cover',
+    body: `
+      <div class="cover-logo">SEONA</div>
+      <div class="cover-subtitle">${l('executiveSummary')}</div>
+      <div class="cover-domain">${escapeHtml(data.projectUrl)}</div>
+      <div class="cover-date">${formatDate(data.completedAt, lang)}</div>
+      <div class="cover-score">${renderScoreGaugeSVG(data.overallScore, 220, p)}</div>
+    `,
+    slideNum: 0,
+    url: data.projectUrl,
+    lang,
+    p,
+  }));
+
+  // ── Slide 2: Score Overview + Key Metrics ──
+  slideNum++;
+  const scoreRating = getScoreLabel(data.overallScore, lang);
+  slides.push(wrapSlide({
+    sectionTitle: l('scoreOverview'),
+    body: `
+      <div style="display: flex; gap: 32px; align-items: flex-start; margin-bottom: 20px;">
+        <div class="flex-col-center" style="flex-shrink: 0;">
+          ${renderScoreGaugeSVG(data.overallScore, 180, p)}
+          <div class="score-label" style="font-size: 14pt; font-weight: 600; margin-top: 8px;">${scoreRating}</div>
+        </div>
+        <div style="flex: 1; padding-top: 12px;">
+          <div class="metric-row">
+            <span class="metric-label">${l('businessType')}</span>
+            <span class="metric-value">${escapeHtml(data.businessType ?? '—')}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">${l('pagesCrawled')}</span>
+            <span class="metric-value">${data.pagesCrawled ?? '—'}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">${l('completedOn')}</span>
+            <span class="metric-value">${formatDate(data.completedAt, lang)}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">${l('totalIssues')}</span>
+            <span class="metric-value">${data.issues.length}</span>
+          </div>
+          <div class="severity-dots" style="margin-top: 12px;">
+            <span class="severity-dot"><span class="dot" style="background: #c1121f;"></span> ${sevCounts.critical} ${l('critical')}</span>
+            <span class="severity-dot"><span class="dot" style="background: #cc7722;"></span> ${sevCounts.high} ${l('high')}</span>
+            <span class="severity-dot"><span class="dot" style="background: #d4a843;"></span> ${sevCounts.medium} ${l('medium')}</span>
+            <span class="severity-dot"><span class="dot" style="background: #2a9d5a;"></span> ${sevCounts.low} ${l('low')}</span>
+          </div>
+        </div>
+      </div>
+      <h2 style="font-size: 11pt; margin-top: 16px; margin-bottom: 8px;">${l('categoryScores')}</h2>
+      <div class="cat-grid">${data.categories.map((c, i) => renderCategoryCardV2(c, i, lang, p)).join('')}</div>
+    `,
+    slideNum,
+    url: data.projectUrl,
+    lang,
+    p,
+  }));
+
+  // ── Slide 3: Charts (two-col) ──
+  slideNum++;
+  const radarSvg = renderRadarChartSVG(chartCategories, 240, p);
+  const barSvg = renderBarChartSVG(chartCategories, 300, p, 320);
+  slides.push(wrapSlide({
+    layout: 'two-col',
+    sectionTitle: l('charts'),
+    body: `
+      <div class="flex-col-center">
+        <h2 style="font-size: 10pt; margin-bottom: 8px;">${lang === 'de' ? 'Radar-Übersicht' : 'Radar Overview'}</h2>
+        ${radarSvg}
+      </div>
+      <div class="flex-col-center">
+        <h2 style="font-size: 10pt; margin-bottom: 8px;">${lang === 'de' ? 'Kategorie-Vergleich' : 'Category Comparison'}</h2>
+        ${barSvg}
+      </div>
+    `,
+    slideNum,
+    url: data.projectUrl,
+    lang,
+    p,
+  }));
+
+  // ── Slides 5-N: Top Issues (2-3 per slide) ──
+  if (topIssues.length > 0) {
+    const issueChunks = chunk(topIssues, 3);
+    for (const [chunkIdx, issueChunk] of issueChunks.entries()) {
+      slideNum++;
+      const titleSuffix = issueChunks.length > 1 ? ` (${chunkIdx + 1}/${issueChunks.length})` : '';
+      const cards = issueChunk
+        .map((issue, i) => {
+          const globalIdx = chunkIdx * 3 + i;
+          return renderIssueCardV2(issue, globalIdx, topIssues.length, lang, p);
+        })
+        .join('');
+      slides.push(wrapSlide({
+        sectionTitle: `${l('topIssues')}${titleSuffix}`,
+        body: cards,
+        slideNum,
+        url: data.projectUrl,
+        lang,
+        p,
+      }));
+    }
+  }
+
+  // ── Quick Wins slide ──
+  if (quickWins.length > 0) {
+    slideNum++;
+    const wins = quickWins.map((w, i) => renderQuickWinCard(w, i, p)).join('');
+    slides.push(wrapSlide({
+      sectionTitle: l('quickWins'),
+      body: `
+        <p style="color: ${p.textMuted}; margin-bottom: 12px; font-size: 9pt;">
+          ${lang === 'de' ? 'Diese Verbesserungen können schnell umgesetzt werden und haben eine sofortige Wirkung.' : 'These improvements can be implemented quickly for immediate impact.'}
+        </p>
+        ${wins}
+      `,
+      slideNum,
+      url: data.projectUrl,
+      lang,
+      p,
+    }));
+  }
+
+  // ── Final slide: Next Steps + CTA ──
+  slideNum++;
+  const steps = lang === 'de'
+    ? [
+      { title: 'Kritische Probleme zuerst beheben', desc: 'Konzentrieren Sie sich auf die rot markierten Probleme, die die größte Auswirkung haben.' },
+      { title: 'Schnelle Erfolge umsetzen', desc: 'Setzen Sie die einfachen Verbesserungen um, die wenig Aufwand erfordern.' },
+      { title: 'Fortschritte überwachen', desc: 'Führen Sie nach der Umsetzung ein erneutes Audit durch.' },
+      { title: 'Regelmäßige Audits planen', desc: 'Planen Sie monatliche SEO-Audits für kontinuierliche Verbesserung.' },
+    ]
+    : [
+      { title: 'Address critical issues first', desc: 'Focus on the red-flagged issues that have the highest impact on your SEO.' },
+      { title: 'Implement quick wins', desc: 'Deploy the easy improvements that require minimal effort but yield results.' },
+      { title: 'Monitor progress', desc: 'Run a follow-up audit after implementing changes to measure improvements.' },
+      { title: 'Schedule regular audits', desc: 'Plan monthly SEO audits to maintain and improve your rankings.' },
+    ];
+
+  const stepsHtml = steps
+    .map((s, i) => `
+      <div class="step-card">
+        <div class="step-num">${i + 1}</div>
+        <div class="step-text">
+          <strong>${s.title}</strong>
+          <span>${s.desc}</span>
+        </div>
+      </div>
+    `)
+    .join('');
+
+  slides.push(wrapSlide({
+    sectionTitle: l('nextSteps'),
+    body: `
+      ${stepsHtml}
+      <div class="cta-card">
+        <h2>${l('contactUs')}</h2>
+        <p>${lang === 'de' ? 'Benötigen Sie Hilfe bei der Umsetzung? Unser SEO-Team steht Ihnen zur Verfügung.' : 'Need help implementing these recommendations? Our SEO team is here to help.'}</p>
+        <div class="cta-brand">SEONA SEO Services</div>
+      </div>
+    `,
+    slideNum,
+    url: data.projectUrl,
+    lang,
+    p,
+  }));
+
+  // ── Assemble final HTML ──
+  const totalSlides = slideNum;
+  const html = `<!DOCTYPE html>
 <html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${l('executiveSummary')} — ${data.projectUrl}</title>
-  <style>${PDF_STYLES}</style>
+  <title>${l('executiveSummary')} — ${escapeHtml(data.projectUrl)}</title>
+  <style>${getPdfStyles(p)}</style>
 </head>
 <body>
-
-  <!-- Page 1: Cover -->
-  <div class="cover-page">
-    <div class="cover-logo">SEONA</div>
-    <div class="cover-subtitle">${l('executiveSummary')}</div>
-    <div class="cover-domain">${data.projectUrl}</div>
-    <div class="cover-date">${formatDate(data.completedAt)}</div>
-    <div class="cover-score">
-      ${scoreGaugeSvg}
-    </div>
-  </div>
-
-  <!-- Page 2: Scores + Radar + Top Issues -->
-  <div class="section">
-    <h1>${l('seoHealthScore')}</h1>
-
-    <div class="charts-row">
-      <div class="chart-container">
-        ${scoreGaugeSvg}
-      </div>
-      <div class="chart-container">
-        ${radarSvg}
-      </div>
-    </div>
-
-    <h2>${l('categoryScores')}</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>${l('category')}</th>
-          <th>${l('score')}</th>
-          <th>${l('weight')}</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${data.categories
-          .map(
-            (c) => `
-          <tr>
-            <td>${l(CATEGORY_LABELS[c.category] ?? c.category)}</td>
-            <td><strong>${c.score}</strong>/100</td>
-            <td>${c.weight}%</td>
-          </tr>`,
-          )
-          .join('')}
-      </tbody>
-    </table>
-
-    ${
-      topIssues.length > 0
-        ? `
-    <h2>${l('topIssues')}</h2>
-    ${topIssues
-      .map(
-        (issue) => `
-      <div class="issue-card">
-        <h3>${severityBadge(issue.severity, lang)} ${issue.title}</h3>
-        <p>${issue.description}</p>
-        ${issue.impact ? `<p class="impact"><strong>${l('impact')}:</strong> ${issue.impact}</p>` : ''}
-      </div>`,
-      )
-      .join('')}`
-        : ''
-    }
-  </div>
-
-  <!-- Page 3: Quick Wins -->
-  ${
-    quickWins.length > 0
-      ? `
-  <div class="section">
-    <h1>${l('quickWins')}</h1>
-    <p style="color: #8888a0; margin-bottom: 20px;">${lang === 'de' ? 'Diese Verbesserungen können schnell umgesetzt werden und haben eine sofortige Wirkung.' : 'These improvements can be implemented quickly for immediate impact.'}</p>
-    ${quickWins
-      .map(
-        (win, i) => `
-      <div class="quick-win">
-        <h3>${i + 1}. ${win.title}</h3>
-        <p>${win.recommendation}</p>
-      </div>`,
-      )
-      .join('')}
-  </div>`
-      : ''
-  }
-
-  <!-- Page 4: Next Steps + Contact -->
-  <div class="section">
-    <h1>${l('nextSteps')}</h1>
-    <div class="next-steps">
-      <ol>
-        <li><strong>${lang === 'de' ? 'Kritische Probleme zuerst beheben' : 'Address critical issues first'}</strong> — ${lang === 'de' ? 'Konzentrieren Sie sich auf die rot markierten Probleme, die die größte Auswirkung haben.' : 'Focus on the red-flagged issues that have the highest impact on your SEO performance.'}</li>
-        <li><strong>${lang === 'de' ? 'Schnelle Erfolge umsetzen' : 'Implement quick wins'}</strong> — ${lang === 'de' ? 'Setzen Sie die einfachen Verbesserungen um, die wenig Aufwand erfordern.' : 'Deploy the easy improvements that require minimal effort but yield measurable results.'}</li>
-        <li><strong>${lang === 'de' ? 'Fortschritte überwachen' : 'Monitor progress'}</strong> — ${lang === 'de' ? 'Führen Sie nach der Umsetzung ein erneutes Audit durch, um die Verbesserungen zu messen.' : 'Run a follow-up audit after implementing changes to measure improvements.'}</li>
-        <li><strong>${lang === 'de' ? 'Regelmäßige Audits planen' : 'Schedule regular audits'}</strong> — ${lang === 'de' ? 'Planen Sie monatliche SEO-Audits, um Ihre Rankings zu halten und zu verbessern.' : 'Plan monthly SEO audits to maintain and improve your rankings.'}</li>
-      </ol>
-    </div>
-
-    <div style="margin-top: 48px; padding: 24px; background: #12121a; border: 1px solid #2a2a3e; border-radius: 12px; text-align: center;">
-      <h2 style="margin-top: 0;">${l('contactUs')}</h2>
-      <p style="color: #8888a0;">${lang === 'de' ? 'Benötigen Sie Hilfe bei der Umsetzung? Unser SEO-Team steht Ihnen zur Verfügung.' : 'Need help implementing these recommendations? Our SEO team is here to help.'}</p>
-      <p style="color: #e05a33; font-weight: 600; margin-top: 12px;">SEONA SEO Services</p>
-    </div>
-  </div>
-
+${slides.join('\n')}
 </body>
 </html>`;
+
+  return html.replaceAll(TOTAL_PLACEHOLDER, String(totalSlides));
 }

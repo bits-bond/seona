@@ -1,25 +1,60 @@
-<!-- Updated: 2026-03-06 -->
-
 ![SEONA](screenshots/cover-image.jpeg)
 
-# SEONA
+# SEONA — AI-Powered SEO Audit Platform
 
-AI-powered SEO audit platform. Combines Claude Code skills for deep analysis with a Next.js dashboard for visualizing results.
+SEONA is a comprehensive SEO analysis toolkit that combines 17 specialized AI-driven audit modules with a real-time web dashboard. Run deep site audits, detect schema issues, analyze content quality, and track SEO health — all from your terminal or browser.
 
 ![SEO Command Demo](screenshots/seo-command-demo.gif)
 
-[![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-Skill-blue)](https://claude.ai/claude-code)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## What's Included
+---
 
-- **CLI Skills** — 13 SEO analysis commands for Claude Code (`/seo audit`, `/seo schema`, etc.)
-- **Web Dashboard** — Next.js 15 + HeroUI app with charts, reports, and project management
-- **Background Audits** — Trigger audits from the dashboard; Claude Code runs in the background on your machine
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [CLI Commands](#cli-commands)
+- [Web Dashboard](#web-dashboard)
+- [Scoring Methodology](#scoring-methodology)
+- [Architecture](#architecture)
+- [Requirements](#requirements)
+- [Uninstall](#uninstall)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Features
+
+**Site Auditing** — Full-site crawl with parallel subagent delegation across 7 scoring categories. Supports up to 500 pages per audit.
+
+**Single-Page Deep Analysis** — On-page elements, meta tags, schema, images, content quality, and performance for any URL.
+
+**Core Web Vitals** — LCP (< 2.5s), INP (< 200ms), CLS (< 0.1) measurement and recommendations.
+
+**E-E-A-T Analysis** — Experience, Expertise, Authoritativeness, and Trustworthiness scoring per Google's quality guidelines.
+
+**Schema Markup** — Detection (JSON-LD, Microdata, RDFa), validation against Google's supported types, and generation with templates. Includes deprecation awareness for HowTo, FAQ, and SpecialAnnouncement.
+
+**AI Search Optimization (GEO)** — Optimize for Google AI Overviews, ChatGPT web search, Perplexity, and other AI-powered search engines.
+
+**Technical SEO** — Crawlability, indexability, security headers, URL structure, mobile optimization, JavaScript rendering, and structured data validation.
+
+**Content Quality** — Readability scoring, thin content detection, keyword analysis, and AI citation readiness assessment.
+
+**International SEO** — Hreflang audit, validation, and generation for multi-language/multi-region sites.
+
+**Programmatic SEO** — Template analysis, URL pattern optimization, internal linking automation, and index bloat prevention for pages generated at scale.
+
+**Web Dashboard** — Real-time audit progress via SSE, radar charts, prioritized issue lists with severity levels, markdown report viewer, and PDF export.
+
+---
 
 ## Quick Start
 
-### 1. Install CLI Skills
+### Option 1: Install CLI Skills
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/DDX1/seona/main/install.sh | bash
@@ -31,7 +66,7 @@ Windows:
 irm https://raw.githubusercontent.com/DDX1/seona/main/install.ps1 | iex
 ```
 
-Or install manually:
+Or clone and install manually:
 
 ```bash
 git clone https://github.com/DDX1/seona.git
@@ -39,24 +74,22 @@ cd seona
 ./install.sh
 ```
 
-### 2. Use from Claude Code
+### Option 2: Run a Quick Audit
 
 ```bash
-claude
-
 # Full site audit
 /seo audit https://example.com
 
 # Single page analysis
 /seo page https://example.com/about
 
-# Schema markup
+# Schema markup detection
 /seo schema https://example.com
 ```
 
-### 3. Web Dashboard (Optional)
+### Option 3: Launch the Web Dashboard
 
-Requires: Node.js 18+, Docker
+Requires Node.js 18+ and Docker.
 
 ```bash
 cd web
@@ -64,141 +97,130 @@ cd web
 # Start PostgreSQL
 docker compose up -d
 
-# Install dependencies
+# Install dependencies & configure
 npm install
-
-# Configure env (defaults work with Docker)
 cp .env.example .env
 
-# Push database schema
+# Initialize the database
 npm run db:push
 
 # Seed sample data (optional)
 npm run db:seed
 
-# Start the app
+# Start the development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Create a project, add a URL, and run an audit from the browser.
+Open [http://localhost:3000](http://localhost:3000). Create a project, add a URL, and launch an audit from the browser.
 
-### Demo
-
-[Watch the full demo on YouTube](https://www.youtube.com/watch?v=COMnNlUakQk)
-
-**`/seo audit` — full site audit with parallel subagents:**
-
-![SEO Audit Demo](screenshots/seo-audit-demo.gif)
+---
 
 ## CLI Commands
 
-| Command                       | Description                                                        |
-| ----------------------------- | ------------------------------------------------------------------ |
-| `/seo audit <url>`            | Full website audit with parallel subagent delegation               |
-| `/seo page <url>`             | Deep single-page analysis                                          |
-| `/seo sitemap <url>`          | Analyze existing XML sitemap                                       |
-| `/seo sitemap generate`       | Generate new sitemap with industry templates                       |
-| `/seo schema <url>`           | Detect, validate, and generate Schema.org markup                   |
-| `/seo images <url>`           | Image optimization analysis                                        |
-| `/seo technical <url>`        | Technical SEO audit (8 categories)                                 |
-| `/seo content <url>`          | E-E-A-T and content quality analysis                               |
-| `/seo geo <url>`              | AI Overviews / Generative Engine Optimization                      |
-| `/seo plan <type>`            | Strategic SEO planning (saas, local, ecommerce, publisher, agency) |
-| `/seo programmatic <url>`     | Programmatic SEO analysis and planning                             |
-| `/seo competitor-pages <url>` | Competitor comparison page generation                              |
-| `/seo hreflang <url>`         | Hreflang/i18n SEO audit and generation                             |
+| Command | Description |
+|---|---|
+| `/seo audit <url>` | Full website audit with parallel subagent delegation |
+| `/seo page <url>` | Deep single-page SEO analysis |
+| `/seo technical <url>` | Technical SEO audit (8 categories) |
+| `/seo content <url>` | E-E-A-T and content quality analysis |
+| `/seo schema <url>` | Detect, validate, and generate Schema.org markup |
+| `/seo sitemap <url>` | Analyze existing XML sitemap |
+| `/seo sitemap generate` | Generate new sitemap with industry templates |
+| `/seo images <url>` | Image optimization analysis |
+| `/seo geo <url>` | AI Overviews / Generative Engine Optimization |
+| `/seo hreflang <url>` | Hreflang and international SEO audit |
+| `/seo plan <type>` | Strategic SEO planning (saas, local, ecommerce, publisher, agency) |
+| `/seo programmatic <url>` | Programmatic SEO analysis for pages at scale |
+| `/seo competitor-pages <url>` | Competitor comparison page generation |
+| `/seo keywords <url>` | Keyword research and opportunity analysis |
+| `/seo backlinks <url>` | Backlink profile analysis |
+| `/seo competitor <url>` | Competitor SEO benchmarking |
+| `/seo gsc` | Google Search Console integration and insights |
 
-## Scoring
+---
+
+## Web Dashboard
+
+The dashboard provides a visual interface for managing projects and running audits.
+
+- **Project Management** — Organize multiple sites with separate URL tracking
+- **Real-Time Progress** — Server-Sent Events stream audit progress live
+- **Score Visualization** — Radar charts for category scores, trend tracking
+- **Issue Prioritization** — Critical, high, medium, and low severity groupings
+- **Full Reports** — Markdown viewer with copy-to-clipboard and PDF export
+- **Responsive Design** — Optimized for desktop and mobile
+
+---
+
+## Scoring Methodology
+
+Each audit produces an overall SEO Health Score (0–100) calculated from seven weighted categories:
 
 | Category | Weight |
-|----------|--------|
+|---|---|
 | Technical SEO | 25% |
 | Content Quality | 25% |
 | On-Page SEO | 20% |
 | Schema / Structured Data | 10% |
-| Performance (CWV) | 10% |
+| Performance (Core Web Vitals) | 10% |
 | Images | 5% |
 | AI Search Readiness | 5% |
 
-## Features
-
-### Core Web Vitals
-
-- **LCP** (Largest Contentful Paint): Target < 2.5s
-- **INP** (Interaction to Next Paint): Target < 200ms
-- **CLS** (Cumulative Layout Shift): Target < 0.1
-
-### E-E-A-T Analysis
-
-- **Experience**: First-hand knowledge signals
-- **Expertise**: Author credentials and depth
-- **Authoritativeness**: Industry recognition
-- **Trustworthiness**: Contact info, security, transparency
-
-### Schema Markup
-
-- Detection: JSON-LD (preferred), Microdata, RDFa
-- Validation against Google's supported types
-- Generation with templates
-- Deprecation awareness (HowTo, FAQ restrictions, SpecialAnnouncement)
-
-### AI Search Optimization (GEO)
-
-- Google AI Overviews
-- ChatGPT web search
-- Perplexity
-- Other AI-powered search
-
-### Web Dashboard
-
-- Project management with multiple URLs
-- Real-time audit progress via SSE
-- Category score radar charts
-- Prioritized issue lists with severity levels
-- Full markdown report viewer with copy-to-clipboard
-- Responsive design (desktop + mobile)
-
-## Tech Stack
-
-### CLI Skills
-- Python 3.8+
-- Claude Code CLI
-- 6 parallel subagents for full audits
-
-### Web Dashboard
-- Next.js 15 (App Router)
-- HeroUI v3 + Tailwind CSS v4
-- Recharts for data visualization
-- PostgreSQL 16 (via Docker)
-- Drizzle ORM
-- SWR for data fetching
+---
 
 ## Architecture
 
 ```
-seo/                    # Main skill files
-skills/seo-*/           # 12 sub-skills
-agents/seo-*.md         # 6 subagents
-scripts/                # Shared Python scripts
-web/                    # Next.js dashboard
-  app/                  # App Router pages + API routes
-  components/           # UI components (dashboard, ui)
-  lib/                  # DB schema, audit engine, utils
+seona/
+├── skills/               # 17 specialized SEO analysis modules
+│   ├── seo-audit/        # Full-site audit orchestrator
+│   ├── seo-page/         # Single-page deep analysis
+│   ├── seo-technical/    # Technical SEO checks
+│   ├── seo-content/      # Content quality & E-E-A-T
+│   ├── seo-schema/       # Schema.org markup
+│   ├── seo-sitemap/      # XML sitemap analysis
+│   ├── seo-images/       # Image optimization
+│   ├── seo-geo/          # AI search optimization
+│   ├── seo-hreflang/     # International SEO
+│   ├── seo-plan/         # Strategic planning
+│   ├── seo-programmatic/ # Programmatic SEO
+│   ├── seo-keywords/     # Keyword research
+│   ├── seo-backlinks/    # Backlink analysis
+│   ├── seo-competitor/   # Competitor benchmarking
+│   └── ...
+├── agents/               # 12 parallel subagents for audit delegation
+├── web/                  # Next.js dashboard application
+│   ├── app/              # App Router pages & API routes
+│   ├── components/       # UI components
+│   ├── lib/              # Database schema, audit engine, PDF generation
+│   └── types/            # TypeScript type definitions
+└── scripts/              # Utility scripts
 ```
+
+---
 
 ## Requirements
 
-| Component | Requirement |
-|-----------|-------------|
-| CLI Skills | Python 3.8+, Claude Code CLI |
+| Component | Prerequisite |
+|---|---|
+| CLI Skills | Python 3.8+ |
 | Web Dashboard | Node.js 18+, Docker |
-| Optional | Playwright (for screenshots) |
+| PDF Export | Included (server-side rendering) |
+| Screenshots | Playwright (optional) |
+
+### Tech Stack
+
+**Dashboard:** Next.js 15 (App Router) · React 19 · HeroUI v3 · Tailwind CSS v4 · Recharts · PostgreSQL 16 · Drizzle ORM · SWR
+
+---
 
 ## Uninstall
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/DDX1/seona/main/uninstall.sh | bash
 ```
+
+---
 
 ## Documentation
 
@@ -208,14 +230,22 @@ curl -fsSL https://raw.githubusercontent.com/DDX1/seona/main/uninstall.sh | bash
 - [MCP Integration](docs/MCP-INTEGRATION.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 
-## License
+---
 
-MIT License - see [LICENSE](LICENSE) for details.
+## Demo
 
-## Contributing
+[Watch the full demo on YouTube](https://www.youtube.com/watch?v=COMnNlUakQk)
 
-Contributions welcome! Please read the guidelines in `docs/` before submitting PRs.
+**Full site audit with parallel subagents:**
+
+![SEO Audit Demo](screenshots/seo-audit-demo.gif)
 
 ---
 
-Built for Claude Code by [@DDX1](https://github.com/DDX1)
+## Contributing
+
+Contributions are welcome. Please review the guidelines in `docs/` before submitting a pull request.
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
