@@ -5,6 +5,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-03-12
+
+### Security
+- **Install script supply chain fix**: Replaced `irm | iex` Windows PowerShell one-liner with `git clone + powershell -File` as primary install method. Claude Code's own security guardrails flagged the old pattern as a supply chain risk (reported by community member). Added collapsible "review before running" section for Unix curl method.
+- **Version pinning**: `install.sh` and `install.ps1` now clone a specific release tag (`v1.3.0`) by default rather than `main`, preventing silent updates. Override with `CLAUDE_SEO_TAG=main`.
+- **PowerShell Invoke-External hardening**: Comprehensive `PSNativeCommandUseErrorActionPreference` handling in `Invoke-External` wrapper (fixes Windows git clone stderr false-positive termination, from PR #13 + PR #15).
+
+### Added
+- **GEO agent deployed**: `agents/seo-geo.md` created — `/seo audit` now spawns 7 parallel agents (was 6). GEO analysis covers AI crawler access, llms.txt, passage-level citability, brand mention signals, platform-specific scoring (Google AI Overviews, ChatGPT, Perplexity, Bing Copilot).
+- **`--googlebot` flag in `fetch_page.py`**: Detect prerender/dynamic rendering services by comparing response size with default UA vs Googlebot UA. First phase of SPA/CSR support (Issue #11).
+
+### Fixed
+- **URL normalization**: `capture_screenshot.py` and `analyze_visual.py` now accept bare domains (`example.com` → `https://example.com`) via shared `normalize_url()` helper (from PR #16 by @shuofengzhang).
+- **GEO weight**: AI Search Readiness weight increased from 5% to 10% in overall SEO Health Score. Technical SEO adjusted to 22%, Content Quality to 23%.
+- **FAQPage guidance**: Blanket "remove FAQPage on commercial sites" updated to nuanced guidance — existing FAQPage → Info priority (not Critical), noting AI/LLM citation benefit. Adding new FAQPage → not recommended for Google, note AI benefit. Updated in `seo/SKILL.md`, `agents/seo-schema.md`, `seo/references/schema-types.md`.
+- **Uninstall agents list**: Added `seo-geo` to `uninstall.sh` and `uninstall.ps1` removal lists.
+- **Python requirement**: Corrected from `3.8+` to `3.10+` in `README.md` and `docs/INSTALLATION.md`.
+
+### Changed
+- Subagent count: 6 → 7 (added seo-geo to core audit pipeline)
+- `.gitignore`: Added generated audit artifacts (charts/, PDFs, report.html, firebase-debug.log, generated-schema.json)
+
+---
+
+## [1.3.0] - 2026-03-06
+
+### Added
+- **Extension system**: `extensions/` directory convention for self-contained add-ons with install/uninstall scripts
+- **DataForSEO extension**: 22 commands across 9 API modules (SERP, keywords, backlinks, on-page, content, business listings, AI visibility, LLM mentions). Install: `./extensions/dataforseo/install.sh`
+- **DataForSEO integration**: seo-audit, seo-content, seo-geo, seo-page, seo-plan, seo-technical auto-detect DataForSEO MCP tools for enriched analysis
+- **Plugin manifest**: `.claude-plugin/plugin.json` for official plugin directory submission
+- **Documentation**: Extensions architecture in ARCHITECTURE.md, 22 new commands in COMMANDS.md, updated MCP integration guide
+
+### Fixed
+- **Title tag threshold**: Pre-commit hook now uses 60-char max, aligned with quality-gates.md and echo message
+- **SSRF prevention**: Added to `capture_screenshot.py` (defense-in-depth, matching `fetch_page.py`)
+- **Frontmatter cleanup**: Removed non-standard `allowed-tools` from main SKILL.md
+
+### Changed
+- Sub-skill count: 12 + 1 extension (added seo-dataforseo via DataForSEO extension)
+- Subagent count: 6 + 1 optional (added seo-dataforseo agent via extension)
+- DataForSEO promoted from "Community" to "Official extension" in MCP docs
+
+---
+
+## [1.2.1] - 2026-02-28
+
+### Fixed
+- **User-Agent header**: Changed default from bot-style `ClaudeSEO/1.0` to Chrome-like string with `ClaudeSEO/1.2` suffix. SSR frameworks (Next.js, Nuxt, Angular) now pre-render properly instead of serving empty client-side shells (#9)
+- **Custom User-Agent support**: Added `--user-agent` flag to `fetch_page.py` for configurable UA strings
+
+### Added
+- **install.cat support**: Added alternative install method via `curl install.cat/AgriciDaniel/claude-seo | bash` to README (#10)
+
+---
+
 ## [1.2.0] - 2026-02-19
 
 ### Security

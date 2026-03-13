@@ -9,6 +9,11 @@
 - [x] **requirements.txt persistence** — Copied to skill dir after install (from @edustef #1)
 - [x] **Path traversal prevention** — Output path sanitization in capture_screenshot.py, file validation in parse_html.py
 
+## Completed — Extensions
+
+- [x] **Extension system** — `extensions/` directory convention with self-contained add-ons
+- [x] **DataForSEO extension** — 22 commands across 9 API modules (SERP, keywords, backlinks, on-page, content, business listings, AI visibility, LLM mentions). Install: `./extensions/dataforseo/install.sh`
+
 ## Deferred from Community Feedback
 
 - [ ] **Reduce Bash scope on agents** (Priority: Medium, from @artyomsv #7)
@@ -44,6 +49,25 @@
 - [ ] **Brand mention analysis Python implementation** (Priority: Low)
   Currently documented in `seo-geo/SKILL.md` but no programmatic scoring.
 
+## SPA / Client-Side Rendering Support (Issue #11)
+
+Phase 2 (merged in v1.4.0):
+- [x] **`--googlebot` flag in fetch_page.py** — Compare response size with default UA vs Googlebot UA to detect prerender services
+
+Remaining phases (deferred):
+
+- [ ] **Phase 1: render_page.py** (Priority: High) — Playwright-based page renderer that exports fully-rendered DOM HTML. CLI: `python render_page.py https://example.com --output rendered.html`. Drop-in complement to `fetch_page.py`.
+
+- [ ] **Phase 3: Screenshot DOM export** (Priority: Medium) — Add `--export-html` flag to `capture_screenshot.py` so rendered DOM is available to other agents without a second browser launch.
+
+- [ ] **Phase 4: Orchestrator SPA detection** (Priority: High) — Add 6 SPA detection signals to `seo/SKILL.md` (empty root div, minimal body, prerenderReady, framework markers, large JS bundles, React/Vue/Angular attributes). Route agents to raw vs rendered HTML based on detection result.
+
+- [ ] **Phase 5: Agent updates** (Priority: High) — Update seo-technical, seo-content, seo-schema, seo-performance, seo-visual to use rendered DOM when SPA detected. Add WRS (Web Rendering Service) dependency risk deductions.
+
+- [ ] **Phase 6: SPA scoring methodology** (Priority: Medium) — Separate scoring paths for SPAs with/without prerender. New "Rendering Architecture Assessment" report section.
+
+- [ ] **Phase 7: Reference file updates** (Priority: Low) — Add SPA section to quality-gates.md, eeat-framework.md, cwv-thresholds.md (Soft Navigations API guidance).
+
 ---
 
-*Last updated: February 19, 2026*
+*Last updated: March 12, 2026*

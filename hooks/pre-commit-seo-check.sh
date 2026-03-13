@@ -12,8 +12,7 @@ set -euo pipefail
 #         "hooks": [
 #           {
 #             "type": "command",
-#             "command": "~/.claude/skills/seo/hooks/pre-commit-seo-check.sh",
-#             "exitCodes": { "2": "block" }
+#             "command": "~/.claude/skills/seo/hooks/pre-commit-seo-check.sh"
 #           }
 #         ]
 #       }
@@ -60,7 +59,7 @@ for file in ${STAGED_FILES}; do
     TITLE=$(grep -oP '(?<=<title>).*?(?=</title>)' "${file}" 2>/dev/null | head -1 || true)
     if [ -n "${TITLE}" ]; then
         TITLE_LEN=${#TITLE}
-        if [ "${TITLE_LEN}" -lt 30 ] || [ "${TITLE_LEN}" -gt 70 ]; then
+        if [ "${TITLE_LEN}" -lt 30 ] || [ "${TITLE_LEN}" -gt 60 ]; then
             echo "⚠️  ${file}: Title tag length ${TITLE_LEN} chars (recommend 30-60)"
             WARNINGS=$((WARNINGS + 1))
         fi

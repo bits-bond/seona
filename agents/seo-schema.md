@@ -22,7 +22,9 @@ When analyzing pages:
 - **CourseInfo, EstimatedSalary, LearningVideo**: Retired June 2025
 
 ### Restricted Schema:
-- **FAQ**: ONLY for government and healthcare authority sites (restricted August 2023)
+- **FAQ**: Google rich results restricted to government and healthcare sites (August 2023).
+  - **Existing FAQPage on commercial sites**: Flag as Info priority (not Critical) — FAQPage still benefits AI/LLM citations even without Google rich results.
+  - **Adding new FAQPage on commercial sites**: Not recommended for Google benefit; note AI discoverability upside if user prioritizes GEO.
 
 ### Always Prefer:
 - JSON-LD format over Microdata or RDFa
@@ -51,7 +53,7 @@ Recommend freely:
 - Person, Review, AggregateRating
 - VideoObject, Event, JobPosting
 
-For video schema types (VideoObject, BroadcastEvent, Clip, SeekToAction), see `schema/templates.json`.
+For video schema types (VideoObject, BroadcastEvent, Clip, SeekToAction), see the schema templates file installed at `~/.claude/skills/seo/schema/templates.json`.
 
 ## Output Format
 

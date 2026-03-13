@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **Python 3.8+** with pip
+- **Python 3.10+** with pip
 - **Git** for cloning the repository
 - **Claude Code CLI** installed and configured
 
@@ -220,6 +220,4 @@ Make sure scripts are executable:
 
 ```bash
 chmod +x ~/.claude/skills/seo/scripts/*.py
-chmod +x ~/.claude/skills/seo/hooks/*.py
-chmod +x ~/.claude/skills/seo/hooks/*.sh
 ```

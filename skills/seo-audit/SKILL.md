@@ -2,7 +2,7 @@
 name: seo-audit
 description: >
   Full website SEO audit with parallel subagent delegation. Crawls up to 500
-  pages, detects business type, delegates to 6 specialists, generates health
+  pages, detects business type, delegates to 7 specialists, generates health
   score. Use when user says "audit", "full SEO check", "analyze my site",
   or "website health check".
 ---
@@ -105,3 +105,7 @@ Delay between requests: 1 second
 - **High**: Significantly impacts rankings (fix within 1 week)
 - **Medium**: Optimization opportunity (fix within 1 month)
 - **Low**: Nice to have (backlog)
+
+## DataForSEO Integration (Optional)
+
+If DataForSEO MCP tools are available, spawn the `seo-dataforseo` agent alongside existing subagents to enrich the audit with live data: real SERP positions, backlink profiles with spam scores, on-page analysis (Lighthouse), business listings, and AI visibility checks (ChatGPT scraper, LLM mentions).
