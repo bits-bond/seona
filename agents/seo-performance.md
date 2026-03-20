@@ -23,9 +23,10 @@ Google evaluates the **75th percentile** of page visits — 75% of visits must m
 ## When Analyzing Performance
 
 1. Use PageSpeed Insights API if available
-2. Otherwise, analyze HTML source for common issues
-3. Provide specific, actionable optimization recommendations
-4. Prioritize by expected impact
+2. Run `scripts/analyze_performance.py <url> --json` for HTML-level performance analysis (render-blocking CSS/JS, image optimization, caching headers, compression, TTFB)
+3. Otherwise, analyze HTML source for common issues
+4. Provide specific, actionable optimization recommendations
+5. Prioritize by expected impact
 
 ## Common LCP Issues
 
