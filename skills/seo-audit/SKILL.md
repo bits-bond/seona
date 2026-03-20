@@ -15,11 +15,11 @@ description: >
 2. **Detect business type** — analyze homepage signals per seo orchestrator
 3. **Crawl site** — follow internal links up to 500 pages, respect robots.txt
 4. **Delegate to subagents** (if available, otherwise run inline sequentially):
-   - `seo-technical` — robots.txt, sitemaps, canonicals, Core Web Vitals, security headers
-   - `seo-content` — E-E-A-T, readability, thin content, AI citation readiness
+   - `seo-technical` — robots.txt, sitemaps, canonicals, Core Web Vitals, security headers; runs `scripts/analyze_security.py` and `scripts/analyze_mobile.py`
+   - `seo-content` — E-E-A-T, readability, thin content, AI citation readiness; runs `scripts/analyze_content.py`
    - `seo-schema` — detection, validation, generation recommendations
    - `seo-sitemap` — structure analysis, quality gates, missing pages
-   - `seo-performance` — LCP, INP, CLS measurements
+   - `seo-performance` — LCP, INP, CLS measurements; runs `scripts/analyze_performance.py`
    - `seo-visual` — screenshots, mobile testing, above-fold analysis
 5. **Score** — aggregate into SEO Health Score (0-100)
 6. **Report** — generate prioritized action plan

@@ -18,6 +18,14 @@ claude-seo/
     SKILL.md                         # Entry point, routing table, core rules
     references/                      # On-demand knowledge files
   scripts/                           # Python execution scripts
+    fetch_page.py                  # HTTP fetching with SSRF prevention
+    parse_html.py                  # HTML parsing for SEO elements
+    analyze_backlinks.py           # Backlink profile analysis
+    analyze_content.py             # Content quality (readability, freshness, language)
+    analyze_mobile.py              # Mobile SEO (viewport, touch targets, responsive)
+    analyze_security.py            # HTTP security headers analysis
+    analyze_performance.py         # Performance (CSS/JS blocking, caching, compression)
+    analyze_links.py               # URL structure and anchor text quality
   hooks/                             # Quality gate hooks
   schema/                            # Schema.org JSON-LD templates
   skills/                            # 12 specialized sub-skills
