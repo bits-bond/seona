@@ -38,7 +38,46 @@ Use MCP tools to fetch real GSC data:
    - URLs submitted vs URLs indexed per sitemap
    - Last crawl date per sitemap
 
-### When MCP is NOT Configured
+### When MCP is NOT Configured — Direct API via Script
+
+If a Google service account key is available, use `scripts/gsc_query.py` as an alternative to MCP:
+
+```bash
+# List accessible properties
+scripts/gsc_query.py list-sites --key-file sa.json
+
+# Search analytics (queries, pages, CTR, position)
+scripts/gsc_query.py analytics --site sc-domain:example.com --key-file sa.json --days 28 --dimension query
+scripts/gsc_query.py analytics --site sc-domain:example.com --key-file sa.json --dimension page
+
+# URL inspection (index status, crawl info, canonical)
+scripts/gsc_query.py inspect https://example.com/page --site sc-domain:example.com --key-file sa.json
+
+# Sitemap status (submitted vs indexed)
+scripts/gsc_query.py sitemaps --site sc-domain:example.com --key-file sa.json
+
+# Request indexing (200/day quota)
+scripts/gsc_query.py index-request https://example.com/page --key-file sa.json
+
+# Batch URL inspection (from file, one URL per line)
+scripts/gsc_query.py batch-inspect --urls-file urls.txt --site sc-domain:example.com --key-file sa.json
+
+# Batch indexing from sitemap (respects 200/day quota)
+scripts/gsc_query.py index-batch --sitemap-url https://example.com/sitemap.xml --key-file sa.json --limit 200
+
+# Parse GSC Coverage CSV exports (no API key needed)
+scripts/gsc_query.py coverage --path ./Coverage-Drilldown-export/
+
+# Parse GSC Links CSV exports (no API key needed)
+scripts/gsc_query.py links --path ./Links-export/
+
+# Full 3-phase SEO audit (collects analytics, inspections, CWV, identifies issues, scores)
+scripts/gsc_query.py audit --site sc-domain:example.com --key-file sa.json --days 28
+```
+
+Environment variables `GSC_KEY_FILE`, `GSC_SITE_URL`, `GSC_DEFAULT_DAYS` can be set as alternatives to CLI flags.
+
+### When Neither MCP nor Service Account is Available
 
 Provide value without GSC data:
 

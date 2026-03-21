@@ -22,7 +22,7 @@ Google evaluates the **75th percentile** of page visits — 75% of visits must m
 
 ## When Analyzing Performance
 
-1. Use PageSpeed Insights API if available
+1. Run `scripts/pagespeed.py <url> --json` to get Lighthouse scores and Core Web Vitals via PageSpeed Insights API (no auth required, optional `--api-key` for higher quota)
 2. Otherwise, analyze HTML source for common issues
 3. Provide specific, actionable optimization recommendations
 4. Prioritize by expected impact
