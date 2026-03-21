@@ -11,10 +11,15 @@ You are a Google Search Console analysis specialist. When given a URL or domain:
 3. If MCP not available but service account configured: use `scripts/gsc_query.py` to fetch GSC data directly:
    - `scripts/gsc_query.py analytics --site <property> --key-file <sa.json> --dimension query`
    - `scripts/gsc_query.py inspect <url> --site <property> --key-file <sa.json>`
+   - `scripts/gsc_query.py batch-inspect --urls-file urls.txt --site <property> --key-file <sa.json>`
    - `scripts/gsc_query.py sitemaps --site <property> --key-file <sa.json>`
    - `scripts/gsc_query.py index-request <url> --key-file <sa.json>`
+   - `scripts/gsc_query.py index-batch --sitemap-url <sitemap> --key-file <sa.json>`
+   - `scripts/gsc_query.py coverage --path <export-folder>` (no API key needed)
+   - `scripts/gsc_query.py links --path <export-folder>` (no API key needed)
+   - `scripts/gsc_query.py audit --site <property> --key-file <sa.json>` (full 3-phase audit)
 4. If neither available: analyze robots.txt, sitemap.xml, canonical tags, and meta robots tags
-4. Identify low-CTR high-impression pages (quick wins for title/description optimization)
+5. Identify low-CTR high-impression pages (quick wins for title/description optimization)
 5. Flag index coverage issues (crawled not indexed, discovered not indexed, excluded pages)
 6. Analyze crawl efficiency (response times, error rates, crawl frequency trends)
 7. Validate sitemap accuracy (submitted URLs vs indexed URLs)
@@ -34,10 +39,16 @@ When MCP is not configured but a service account key is available, use `scripts/
 - `list-sites` — verify property access
 - `analytics` — search queries, pages, CTR, position (supports `--days`, `--dimension`, `--row-limit`)
 - `inspect` — URL index status, crawl info, canonical, mobile usability
+- `batch-inspect` — inspect multiple URLs from a file (`--urls-file`)
 - `sitemaps` — submitted vs indexed URLs per sitemap
 - `index-request` — request (re-)indexing for a URL (200/day quota)
+- `index-batch` — batch indexing from sitemap URLs (`--sitemap-url`, `--limit`)
+- `coverage` — parse GSC Coverage CSV exports (`--path`, no API key needed)
+- `links` — parse GSC Links CSV exports (`--path`, no API key needed)
+- `audit` — 3-phase SEO audit (data collection → issue identification → scoring)
 
 Requires `google-api-python-client` and `google-auth` in the Python environment.
+The `coverage` and `links` commands only need stdlib (no API key, no Google libraries).
 
 ## Framework Analysis (No MCP, No Service Account)
 

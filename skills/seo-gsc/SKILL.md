@@ -58,6 +58,21 @@ scripts/gsc_query.py sitemaps --site sc-domain:example.com --key-file sa.json
 
 # Request indexing (200/day quota)
 scripts/gsc_query.py index-request https://example.com/page --key-file sa.json
+
+# Batch URL inspection (from file, one URL per line)
+scripts/gsc_query.py batch-inspect --urls-file urls.txt --site sc-domain:example.com --key-file sa.json
+
+# Batch indexing from sitemap (respects 200/day quota)
+scripts/gsc_query.py index-batch --sitemap-url https://example.com/sitemap.xml --key-file sa.json --limit 200
+
+# Parse GSC Coverage CSV exports (no API key needed)
+scripts/gsc_query.py coverage --path ./Coverage-Drilldown-export/
+
+# Parse GSC Links CSV exports (no API key needed)
+scripts/gsc_query.py links --path ./Links-export/
+
+# Full 3-phase SEO audit (collects analytics, inspections, CWV, identifies issues, scores)
+scripts/gsc_query.py audit --site sc-domain:example.com --key-file sa.json --days 28
 ```
 
 Environment variables `GSC_KEY_FILE`, `GSC_SITE_URL`, `GSC_DEFAULT_DAYS` can be set as alternatives to CLI flags.
