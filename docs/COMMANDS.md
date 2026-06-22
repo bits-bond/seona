@@ -286,11 +286,52 @@ Programmatic SEO analysis and planning for pages generated at scale.
 
 ---
 
+### `/seo aeo <domain>`
+
+Answer Engine Optimization — real LLM citation tracking + branded client report.
+
+**Example:**
+
+```
+/seo aeo bitsandbond.com --competitors phantomstudio.com,hellovelocity.com
+```
+
+**What it does:**
+
+1. Loads or initializes brand config (`output/<domain>/aeo/config.json`)
+2. Suggests 10 tracking prompts and asks for your approval
+3. Runs real LLM queries against OpenAI + Anthropic + Gemini with web search (samples × N)
+4. Parses citations (brand name + URL match + grounded sources)
+5. Computes AI Visibility Score (0–100), gap-table vs competitors
+6. Scrapes brand + competitor pages and uses an LLM (with prompt-injection defense) to identify content gaps
+7. Generates technical artifacts (llms.txt, robots.txt patch, JSON-LD schema, E-E-A-T recommendations)
+8. Renders branded German HTML + PDF report
+
+**Required env vars (live mode):**
+
+- `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `GOOGLE_API_KEY` (or `GEMINI_API_KEY`)
+
+If a key is missing, that provider is skipped. Use `--dry-run` to test the flow with fixture responses (zero API cost).
+
+**Cost:** ~$3–5 per run with 10 prompts × 3 samples × 3 providers. Hard-capped via `--max-spend` (default $20).
+
+**Output:**
+
+- `output/<domain>/aeo/report.html` — self-contained branded report
+- `output/<domain>/aeo/report.pdf` — printable A4
+- `output/<domain>/aeo/artifacts/` — llms.txt, robots-patch.diff, schema.jsonld, eeat-recommendations.md
+- `output/<domain>/aeo/runs/<timestamp>.json` — raw run data for trend tracking
+
+---
+
 ## Quick Reference
 
 | Command                                 | Use Case                    |
 | --------------------------------------- | --------------------------- |
 | `/seo audit <url>`                      | Full website audit          |
+| `/seo aeo <domain>`                     | AEO citation tracking + branded report |
 | `/seo competitor-pages [url\|generate]` | Competitor comparison pages |
 | `/seo content <url>`                    | E-E-A-T analysis            |
 | `/seo geo <url>`                        | AI search optimization      |

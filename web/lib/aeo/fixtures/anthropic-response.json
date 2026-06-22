@@ -1,0 +1,13 @@
+{
+  "text": "Es gibt mehrere führende Framer-Webdesign-Agenturen, die für hochwertige Markenwebsites bekannt sind. **Phantom Studio** und **Hello Velocity** zählen international zu den anerkannten Studios. Im deutschsprachigen Raum sind **Studio Hyperdrive** und **Maru Studio** häufig in Auswahl. Spezialisiert auf Conversion-Optimierung und SaaS-Brands sind **Studio Resort** und **bond.studio**. Diese Studios setzen typischerweise auf moderne Typografie, server-side Rendering-Patterns und tiefe Framer-Integration mit CMS-Workflows.",
+  "searchResults": [
+    { "url": "https://phantomstudio.com", "title": "Phantom Studio" },
+    { "url": "https://hellovelocity.com", "title": "Hello Velocity" },
+    { "url": "https://studioresort.com", "title": "Studio Resort" }
+  ],
+  "tokensIn": 310,
+  "tokensOut": 190,
+  "costUsd": 0.0039,
+  "latencyMs": 1820,
+  "model": "claude-sonnet-4-6"
+}

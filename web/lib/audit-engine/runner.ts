@@ -239,16 +239,24 @@ IMPORTANT: Even though content is in German, these structural tokens MUST stay i
   const cleanEnv = { ...process.env };
   delete cleanEnv.CLAUDECODE;
 
-  const child = spawn('claude', [
+  // Windows: npm installs `claude` as `claude.cmd`. Node spawn can't execute
+  // .cmd files directly since CVE-2024-27980; requires shell:true. We pipe
+  // the prompt via stdin to avoid cmd.exe argument-quoting hazards.
+  const isWindows = process.platform === 'win32';
+  const claudeBin = isWindows ? 'claude.cmd' : 'claude';
+
+  const child = spawn(claudeBin, [
     '--print',
     '--dangerously-skip-permissions',
-    '-p',
-    prompt,
   ], {
     cwd: PROJECT_ROOT,
     env: cleanEnv,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['pipe', 'pipe', 'pipe'],
+    shell: isWindows,
   });
+
+  child.stdin?.write(prompt);
+  child.stdin?.end();
 
   activeProcesses.set(auditId, child);
   console.error(`[audit-runner] Spawned claude CLI for ${auditId}, PID: ${child.pid}`);

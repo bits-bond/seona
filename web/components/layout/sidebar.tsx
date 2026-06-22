@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarProjectList } from "./sidebar-project-list";
@@ -26,6 +27,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Projects", href: "/projects", icon: FolderOpen },
+  { label: "AEO", href: "/aeo", icon: Sparkles },
   { label: "New Audit", href: "/new-audit", icon: PlusCircle },
 ];
 

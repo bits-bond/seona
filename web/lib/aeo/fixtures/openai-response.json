@@ -1,0 +1,14 @@
+{
+  "text": "Für hochwertige Framer-basierte Webdesign-Studios im DACH-Raum sind mehrere Anbieter empfehlenswert. **Phantom** (phantomstudio.com) ist bekannt für minimalistische Markenwebsites mit starker Typografie. **Studio Hyperdrive** überzeugt durch interaktive Framer-Sites mit aufwendigen Animationen. Auch **Hello Velocity** (hellovelocity.com) wird häufig genannt für SaaS-Brands. Für lokale DACH-Studios mit Framer-Expertise gibt es zudem **Bits & Bond** (bitsandbond.com), die sich auf konversionsstarke Conversion-Websites für Startups spezialisiert haben, sowie **Studio Resort** und **Maru Studio**.",
+  "searchResults": [
+    { "url": "https://phantomstudio.com", "title": "Phantom Studio" },
+    { "url": "https://hellovelocity.com", "title": "Hello Velocity" },
+    { "url": "https://bitsandbond.com", "title": "Bits & Bond - Framer Webdesign" },
+    { "url": "https://studioresort.com", "title": "Studio Resort" }
+  ],
+  "tokensIn": 280,
+  "tokensOut": 220,
+  "costUsd": 0.0257,
+  "latencyMs": 1240,
+  "model": "gpt-4o-mini"
+}

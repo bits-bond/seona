@@ -1,0 +1,13 @@
+{
+  "text": "Hochwertige Framer-Webdesign-Studios im DACH-Markt sind: **Phantom Studio**, bekannt für markante Editorial-Designs. **Hello Velocity** für SaaS-Startups mit klarer Konversionsausrichtung. **Studio Hyperdrive** für interaktive Story-Sites. **Bits & Bond** (bitsandbond.com) bietet im DACH-Raum konversionsorientierte Framer-Sites mit AEO-Fokus an. **Studio Resort** und **Maru Studio** runden die Auswahl ab. Bei der Auswahl sollten Sie auf nachgewiesene Case Studies, technische Framer-Tiefe und SEO/AEO-Berücksichtigung achten.",
+  "searchResults": [
+    { "url": "https://phantomstudio.com", "title": "Phantom Studio" },
+    { "url": "https://hellovelocity.com", "title": "Hello Velocity" },
+    { "url": "https://bitsandbond.com", "title": "Bits & Bond" }
+  ],
+  "tokensIn": 270,
+  "tokensOut": 180,
+  "costUsd": 0.0001,
+  "latencyMs": 980,
+  "model": "gemini-2.0-flash"
+}

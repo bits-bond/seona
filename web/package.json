@@ -11,18 +11,25 @@
     "db:seed": "tsx lib/db/seed.ts",
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "aeo": "tsx lib/aeo/cli.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@google/genai": "^0.7.0",
     "@heroui/react": "beta",
     "@heroui/styles": "beta",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.19",
+    "cheerio": "^1.0.0",
     "clsx": "^2.1.1",
+    "commander": "^12.1.0",
     "drizzle-orm": "^0.39.0",
     "lucide-react": "^0.468.0",
     "marked": "^17.0.3",
     "next": "^15",
+    "openai": "^4.83.0",
+    "p-limit": "^6.2.0",
     "postcss": "^8",
     "postgres": "^3.4.5",
     "react": "^19",
@@ -30,10 +37,12 @@
     "react-markdown": "^9.0.3",
     "recharts": "^2.15.0",
     "remark-gfm": "^4.0.0",
+    "robots-parser": "^3.0.1",
     "swr": "^2.3.0",
     "tailwind-merge": "^2.6.0",
     "tailwind-variants": "^0.3.0",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22",
